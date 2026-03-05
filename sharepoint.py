@@ -41,22 +41,23 @@ def _get_session(site_url: str) -> requests.Session:
     session.headers.update({
         "Accept":       "application/json;odata=verbose",
         "Content-Type": "application/json;odata=verbose",
+        # Browser-like UA — some SPO configs reject non-browser requests
+        "User-Agent":   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     })
 
     fed_auth = settings.sharepoint_fed_auth
     rt_fa    = settings.sharepoint_rt_fa
 
     if fed_auth or rt_fa:
-        # ── Cookie auth — must set domain so requests sends them ─────────────
-        # Extract domain from first site URL e.g. citi.sharepoint.com
-        site_urls = settings.sharepoint_site_url_list
-        domain = site_urls[0].split("/")[2] if site_urls else "sharepoint.com"
-
+        # ── Cookie auth — send as raw Cookie header (most reliable) ──────────
+        # Cookie jar domain matching is unreliable; raw header always works
+        cookie_parts = []
         if fed_auth:
-            session.cookies.set("FedAuth", fed_auth, domain=domain, path="/")
+            cookie_parts.append(f"FedAuth={fed_auth}")
         if rt_fa:
-            session.cookies.set("rtFa", rt_fa, domain=domain, path="/")
-        logger.info(f"SharePoint: using cookie-based auth for domain {domain}")
+            cookie_parts.append(f"rtFa={rt_fa}")
+        session.headers["Cookie"] = "; ".join(cookie_parts)
+        logger.info("SharePoint: using cookie-based auth (Cookie header)")
         return session
 
     username = settings.sharepoint_username
@@ -86,13 +87,20 @@ def _get_session(site_url: str) -> requests.Session:
 
 def _sp_get(session: requests.Session, url: str) -> dict | None:
     try:
-        resp = session.get(url, timeout=REQUEST_TIMEOUT)
+        resp = session.get(url, timeout=REQUEST_TIMEOUT, allow_redirects=True)
         if resp.status_code == 200:
-            return resp.json()
+            try:
+                return resp.json()
+            except Exception:
+                return {"d": {"value": resp.text.strip()}}
         if resp.status_code == 401:
-            logger.error(f"SharePoint 401 Unauthorized — check credentials/cookies for: {url}")
+            logger.error(f"SharePoint 401 for: {url}")
+            logger.error(f"401 body: {resp.text[:600]}")
+            logger.error(f"401 headers: { {k:v for k,v in resp.headers.items() if k in ('WWW-Authenticate','X-Forms_Based_Auth_Required','Location')} }")
+        elif resp.status_code == 403:
+            logger.error(f"SharePoint 403 Forbidden: {url} — {resp.text[:300]}")
         else:
-            logger.warning(f"SharePoint GET {resp.status_code}: {url}")
+            logger.warning(f"SharePoint {resp.status_code}: {url} — {resp.text[:200]}")
         return None
     except Exception as e:
         logger.warning(f"SharePoint GET error: {e}")
