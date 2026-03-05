@@ -1,25 +1,15 @@
 @echo off
 echo ============================================================
-echo  SharePoint Setup - Installing Playwright + Edge driver
+echo  SharePoint Setup
 echo ============================================================
 echo.
-
 call conda activate ekm
-
-echo Step 1: Installing Playwright...
-pip install playwright==1.44.0
-
+echo Installing SharePoint auth packages...
+pip install requests-negotiate-sspi==0.5.2 requests-ntlm==1.3.0
 echo.
-echo Step 2: Installing Edge browser driver...
-playwright install msedge
-
-echo.
-echo ============================================================
-echo  Setup complete!
-echo  
-echo  Next steps:
-echo  1. Edit sharepoint_sites.txt - add your SharePoint URLs
-echo  2. Make sure Edge is open and you are logged into SharePoint
-echo  3. Restart backend and click Sync All
+echo Done! Now:
+echo  1. Edit sharepoint_sites.txt - add your SharePoint site URLs
+echo  2. Restart backend and click Sync All
+echo  3. No username/password needed - uses your Windows login
 echo ============================================================
 pause

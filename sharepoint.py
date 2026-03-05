@@ -1,495 +1,337 @@
 """
-SharePoint Connector — Playwright Edition
+SharePoint Connector — Enterprise Edition
 ──────────────────────────────────────────
-Uses Microsoft Edge with your existing logged-in profile.
-Bypasses Zscaler/corporate proxy completely — Edge IS the browser,
-so all org network policies are satisfied automatically.
+Uses Windows SSPI (Kerberos/NTLM) for authentication.
+No cookies, no Azure AD, no tokens, no browser automation.
+
+Your laptop is domain-joined to Citi AD. SharePoint Online is federated
+to that same AD via ADFS. Windows SSPI negotiates auth using your current
+Windows login session automatically — the same credential that unlocks
+your laptop and signs you into everything else.
+
+This is the standard enterprise integration pattern used by tools like
+curl --negotiate, PowerShell Invoke-WebRequest, and Office clients.
+
+Library: requests-negotiate-sspi (pip install requests-negotiate-sspi)
 
 Handles both URL types:
-  /sites/xxx   — SharePoint sites (SitePages + document libraries)
-  /teams/xxx   — Teams-connected sites (document libraries focus)
+  /sites/xxx  — SharePoint sites (SitePages + document libraries)
+  /teams/xxx  — Teams-connected sites (document libraries)
 
-Per site, crawls:
-  1. SitePages  — all .aspx wiki pages, extracts text/tables/content
-  2. Documents  — all document libraries, downloads + extracts files
-                  (.docx .pptx .xlsx .pdf .txt .md .csv)
-
-Sites config: sharepoint_sites.txt (one URL per line) — easier than
-comma-separating 10+ URLs in .env.
-
-Setup (one time):
-  pip install playwright
-  playwright install msedge
+Sites config: sharepoint_sites.txt in project root (one URL per line)
 """
 
 import os
 import re
-import json
-import asyncio
 import logging
-import tempfile
+import requests
+import urllib3
 from datetime import datetime, timezone
 from pathlib import Path
 from config import get_settings
 from models import Document, SourceType
 from utils.file_extractor import extract_text, SUPPORTED_EXTENSIONS, MAX_FILE_SIZE_MB
 
-logger    = logging.getLogger(__name__)
-settings  = get_settings()
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Edge user data dir — reuses your existing logged-in session
-EDGE_USER_DATA = os.path.expandvars(
-    r"%LOCALAPPDATA%\Microsoft\Edge\User Data"
-)
-EDGE_PROFILE   = "Default"
+logger   = logging.getLogger(__name__)
+settings = get_settings()
 
-# Playwright timeouts
-NAV_TIMEOUT    = 60_000   # 60s page navigation
-WAIT_TIMEOUT   = 15_000   # 15s element wait
-
-MAX_PAGES_PER_SITE  = 200
-MAX_FILES_PER_SITE  = 500
-MAX_CHARS           = 50_000
+REQUEST_TIMEOUT   = 60
+MAX_FILES_PER_LIB = 500
+MAX_PAGES_PER_SITE = 300
 
 
 # ── Site list ─────────────────────────────────────────────────────────────────
 
 def _load_site_urls() -> list[str]:
     """
-    Load SharePoint site URLs from:
-    1. sharepoint_sites.txt  (one URL per line, preferred for 10+ sites)
-    2. SHAREPOINT_SITE_URLS  in .env (comma-separated, fallback)
+    Load SharePoint URLs from sharepoint_sites.txt or .env fallback.
+    sharepoint_sites.txt lives in project root — one URL per line.
+    Lines starting with # are comments.
     """
-    # Look for sites file next to .env
-    sites_file = Path(__file__).parent.parent.parent / "sharepoint_sites.txt"
-    if not sites_file.exists():
-        sites_file = Path(__file__).parent.parent / "sharepoint_sites.txt"
+    for candidate in [
+        Path(__file__).parent.parent.parent / "sharepoint_sites.txt",
+        Path(__file__).parent.parent / "sharepoint_sites.txt",
+    ]:
+        if candidate.exists():
+            lines = candidate.read_text(encoding="utf-8").splitlines()
+            urls  = [l.strip() for l in lines
+                     if l.strip() and not l.strip().startswith("#")]
+            if urls:
+                logger.info(f"SharePoint: loaded {len(urls)} sites from sharepoint_sites.txt")
+                return urls
 
-    if sites_file.exists():
-        lines = sites_file.read_text(encoding="utf-8").splitlines()
-        urls  = [l.strip() for l in lines if l.strip() and not l.strip().startswith("#")]
-        if urls:
-            logger.info(f"SharePoint: loaded {len(urls)} sites from sharepoint_sites.txt")
-            return urls
-
-    # Fallback to .env
     return settings.sharepoint_site_url_list
 
 
-# ── Edge browser launch ───────────────────────────────────────────────────────
+# ── Session ───────────────────────────────────────────────────────────────────
 
-def _get_edge_executable() -> str:
-    """Find Edge executable on Windows."""
-    candidates = [
-        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-        os.path.expandvars(r"%PROGRAMFILES(X86)%\Microsoft\Edge\Application\msedge.exe"),
-        os.path.expandvars(r"%PROGRAMFILES%\Microsoft\Edge\Application\msedge.exe"),
-    ]
-    for path in candidates:
-        if os.path.exists(path):
-            return path
-    return ""   # Playwright will try to find it
-
-
-async def _launch_browser(playwright):
+def _make_session() -> requests.Session:
     """
-    Launch Edge reusing your existing profile so you're already logged in.
-    Falls back to a fresh context if profile is locked (Edge already open).
+    Build a requests session using Windows SSPI (Kerberos/NTLM).
+    Uses current Windows login — no credentials needed in config.
+    Falls back to explicit username/password if SSPI not available.
     """
-    edge_exe = _get_edge_executable()
+    session = requests.Session()
+    session.verify = False   # org Zscaler cert — skip verification
+    session.headers.update({
+        "Accept":       "application/json;odata=verbose",
+        "Content-Type": "application/json;odata=verbose",
+    })
 
+    # ── Primary: Windows SSPI (Kerberos/NTLM negotiate) ──────────────────────
     try:
-        # Try persistent context (reuses login session)
-        context = await playwright.chromium.launch_persistent_context(
-            user_data_dir  = EDGE_USER_DATA,
-            channel        = "msedge",
-            executable_path= edge_exe or None,
-            headless       = True,
-            args           = [
-                "--disable-blink-features=AutomationControlled",
-                "--disable-dev-shm-usage",
-                f"--profile-directory={EDGE_PROFILE}",
-            ],
-            accept_downloads = True,
+        from requests_negotiate_sspi import HttpNegotiateAuth
+        session.auth = HttpNegotiateAuth()
+        logger.info("SharePoint: using Windows SSPI (Kerberos/NTLM) auth")
+        return session
+    except ImportError:
+        logger.warning(
+            "requests-negotiate-sspi not installed. "
+            "Run: pip install requests-negotiate-sspi"
         )
-        logger.info("SharePoint: Edge launched with existing profile (logged-in session)")
-        return context, None   # context, browser
-
     except Exception as e:
-        logger.warning(f"Could not use Edge profile ({e}) — trying fresh Edge context")
-        browser = await playwright.chromium.launch(
-            channel         = "msedge",
-            executable_path = edge_exe or None,
-            headless        = True,
-        )
-        context = await browser.new_context(accept_downloads=True)
-        return context, browser
+        logger.warning(f"SSPI auth setup failed: {e}")
+
+    # ── Fallback: explicit NTLM with credentials from .env ───────────────────
+    username = settings.sharepoint_username
+    password = settings.sharepoint_password
+    if username and password:
+        try:
+            from requests_ntlm import HttpNtlmAuth
+            session.auth = HttpNtlmAuth(username, password)
+            logger.info("SharePoint: using explicit NTLM auth")
+            return session
+        except ImportError:
+            pass
+
+    logger.warning("SharePoint: no auth configured — unauthenticated requests only")
+    return session
 
 
-# ── Text extraction from page HTML ────────────────────────────────────────────
+# ── REST API helpers ──────────────────────────────────────────────────────────
 
-def _extract_page_text(html: str, title: str = "") -> str:
-    """
-    Extract meaningful text from SharePoint page HTML.
-    Removes nav, headers, footers, scripts, styles.
-    Preserves main content, tables, list items.
-    """
-    # Remove script, style, nav, header, footer blocks
-    for tag in ["script", "style", "nav", "header", "footer",
-                "aside", "noscript", "svg"]:
-        html = re.sub(
-            rf"<{tag}[^>]*>.*?</{tag}>", " ", html,
-            flags=re.DOTALL | re.IGNORECASE
-        )
-
-    # Convert table cells to readable format
-    html = re.sub(r"<td[^>]*>", " | ", html, flags=re.IGNORECASE)
-    html = re.sub(r"<tr[^>]*>", "\n", html, flags=re.IGNORECASE)
-
-    # Convert list items
-    html = re.sub(r"<li[^>]*>", "\n• ", html, flags=re.IGNORECASE)
-
-    # Headings → add newlines
-    html = re.sub(r"<h[1-6][^>]*>", "\n\n", html, flags=re.IGNORECASE)
-
-    # Paragraphs and divs → newlines
-    html = re.sub(r"<(p|div|br)[^>]*>", "\n", html, flags=re.IGNORECASE)
-
-    # Strip remaining tags
-    html = re.sub(r"<[^>]+>", " ", html)
-
-    # Decode entities
-    html = re.sub(r"&nbsp;",  " ", html)
-    html = re.sub(r"&amp;",   "&", html)
-    html = re.sub(r"&lt;",    "<", html)
-    html = re.sub(r"&gt;",    ">", html)
-    html = re.sub(r"&#\d+;",  " ", html)
-    html = re.sub(r"&[a-z]+;", " ", html)
-
-    # Clean up whitespace
-    lines = [l.strip() for l in html.splitlines()]
-    lines = [l for l in lines if len(l) > 2]   # drop very short lines
-    text  = "\n".join(lines)
-    text  = re.sub(r"\n{3,}", "\n\n", text)
-
-    return text[:MAX_CHARS]
-
-
-# ── Site pages crawler ────────────────────────────────────────────────────────
-
-async def _crawl_site_pages(
-    context,
-    site_url: str,
-    site_display: str,
-    updated_since: datetime | None,
-) -> list[Document]:
-    """Crawl all SitePages for a SharePoint site."""
-    documents = []
-    page      = await context.new_page()
-
+def _get(session: requests.Session, url: str) -> dict | None:
+    """GET a SharePoint REST endpoint, return parsed JSON."""
     try:
-        # Navigate to SitePages library via REST to get page list
-        api_url = f"{site_url}/_api/web/lists/getbytitle('Site Pages')/items?$select=Title,FileRef,Modified,AuthorId,EncodedAbsUrl&$top=500&$orderby=Modified desc"
+        resp = session.get(url, timeout=REQUEST_TIMEOUT)
 
-        await page.goto(api_url, timeout=NAV_TIMEOUT, wait_until="domcontentloaded")
-        content = await page.content()
-
-        # Extract page references from REST response
-        page_refs = re.findall(r'"FileRef"\s*:\s*"([^"]+\.aspx)"', content)
-        titles    = re.findall(r'"Title"\s*:\s*"([^"]+)"', content)
-        modifieds = re.findall(r'"Modified"\s*:\s*"([^"]+)"', content)
-        abs_urls  = re.findall(r'"EncodedAbsUrl"\s*:\s*"([^"]+)"', content)
-
-        if not page_refs:
-            # Fallback — navigate to SitePages library directly
-            await page.goto(f"{site_url}/SitePages", timeout=NAV_TIMEOUT, wait_until="networkidle")
-            page_refs = await page.eval_on_selector_all(
-                "a[href*='.aspx']",
-                "els => els.map(e => e.getAttribute('href'))"
-            )
-            page_refs = list(set(
-                href for href in page_refs
-                if href and "SitePages" in href and not href.endswith("Forms")
-            ))
-
-        logger.info(f"SharePoint '{site_display}': found {len(page_refs)} site pages")
-
-        for i, file_ref in enumerate(page_refs[:MAX_PAGES_PER_SITE]):
-            # Build full URL
-            if file_ref.startswith("http"):
-                full_url = file_ref
-            elif file_ref.startswith("/"):
-                base = "/".join(site_url.split("/")[:3])
-                full_url = f"{base}{file_ref}"
-            else:
-                full_url = f"{site_url}/{file_ref}"
-
-            # Check modified date for incremental sync
-            modified = None
-            if i < len(modifieds):
-                try:
-                    modified = datetime.fromisoformat(
-                        modifieds[i].replace("Z", "+00:00")
-                    )
-                    if updated_since and modified <= updated_since:
-                        continue
-                except Exception:
-                    pass
-
-            title = titles[i] if i < len(titles) else file_ref.split("/")[-1].replace(".aspx", "")
-
+        if resp.status_code == 200:
             try:
-                await page.goto(full_url, timeout=NAV_TIMEOUT, wait_until="domcontentloaded")
-                await page.wait_for_timeout(2000)   # let dynamic content load
+                return resp.json()
+            except Exception:
+                # Scalar endpoints (like /Title) return plain value
+                return {"d": {"value": resp.text.strip()}}
 
-                html    = await page.content()
-                text    = _extract_page_text(html, title)
-                author  = ""
+        if resp.status_code == 401:
+            logger.error(
+                f"SharePoint 401 — SSPI auth failed. "
+                f"Ensure requests-negotiate-sspi is installed and "
+                f"you are logged into Windows domain. URL: {url}"
+            )
+        elif resp.status_code == 403:
+            logger.warning(f"SharePoint 403 — no permission for: {url}")
+        else:
+            logger.warning(f"SharePoint {resp.status_code}: {url}")
 
-                # Try to get author from page meta
-                try:
-                    author = await page.eval_on_selector(
-                        "meta[name='author']", "el => el.content"
-                    )
-                except Exception:
-                    pass
-
-                if not text or len(text) < 50:
-                    logger.debug(f"SharePoint: skipping low-content page: {title}")
-                    continue
-
-                doc = Document(
-                    external_id = full_url,
-                    source_type = SourceType.SHAREPOINT,
-                    source      = f"SharePoint / {site_display}",
-                    title       = title,
-                    content     = text,
-                    url         = full_url,
-                    author      = author or None,
-                    tags        = ["sharepoint", "page", site_display.lower()],
-                    metadata    = {
-                        "content_type": "page",
-                        "site":         site_display,
-                        "file_ref":     file_ref,
-                    },
-                    updated_at  = modified,
-                )
-                documents.append(doc)
-                logger.info(f"SharePoint pages [{i+1}/{min(len(page_refs), MAX_PAGES_PER_SITE)}]: {title}")
-
-            except Exception as e:
-                logger.warning(f"SharePoint: failed to load page '{title}': {e}")
-                continue
-
+        return None
     except Exception as e:
-        logger.error(f"SharePoint site pages error for '{site_display}': {e}")
-    finally:
-        await page.close()
-
-    return documents
+        logger.warning(f"SharePoint request error: {e}")
+        return None
 
 
-# ── Document library crawler ──────────────────────────────────────────────────
+def _check_connection(session: requests.Session, site_url: str) -> str | None:
+    """
+    Verify we can reach the site and return its title.
+    Returns site title on success, None on failure.
+    """
+    data = _get(session, f"{site_url}/_api/web/Title")
+    if data:
+        return data.get("d", {}).get("value", site_url.split("/")[-1])
+    return None
 
-async def _get_library_file_list(
-    context,
+
+# ── Site pages ────────────────────────────────────────────────────────────────
+
+def _get_site_pages(
+    session: requests.Session,
     site_url: str,
     updated_since: datetime | None,
 ) -> list[dict]:
-    """
-    Get list of all files in all document libraries via SharePoint REST API.
-    Using browser context so Zscaler passes it through.
-    """
-    page  = await context.new_page()
-    files = []
+    """Fetch all SitePages items with title, URL, modified date."""
+    url = (
+        f"{site_url}/_api/web/lists/getbytitle('Site Pages')/items"
+        f"?$select=Title,FileRef,Modified,Author/Title,EncodedAbsUrl"
+        f"&$expand=Author&$orderby=Modified desc&$top=500"
+    )
+    data = _get(session, url)
+    if not data:
+        return []
 
+    pages = []
+    for item in data.get("d", {}).get("results", []):
+        modified = _parse_date(item.get("Modified", ""))
+        if updated_since and modified and modified <= updated_since:
+            continue
+        pages.append(item)
+
+    return pages[:MAX_PAGES_PER_SITE]
+
+
+def _fetch_page_content(session: requests.Session, page_url: str) -> str:
+    """
+    Fetch the rendered HTML of a SharePoint page and extract clean text.
+    Uses the page's REST endpoint to get canvas/body content.
+    """
     try:
-        # Get all document libraries
-        libs_url = f"{site_url}/_api/web/lists?$filter=BaseTemplate eq 101 and Hidden eq false&$select=Title,RootFolder/ServerRelativeUrl&$expand=RootFolder"
-        await page.goto(libs_url, timeout=NAV_TIMEOUT, wait_until="domcontentloaded")
-        content = await page.content()
-
-        # Parse library root folders from JSON response
-        lib_roots = re.findall(r'"ServerRelativeUrl"\s*:\s*"([^"]+)"', content)
-        lib_titles = re.findall(r'"Title"\s*:\s*"([^"]+)"', content)
-
-        logger.info(f"SharePoint: found {len(lib_roots)} libraries")
-
-        for lib_idx, root_url in enumerate(lib_roots):
-            lib_title = lib_titles[lib_idx] if lib_idx < len(lib_titles) else "Documents"
-
-            # Skip system libraries
-            if any(skip in lib_title.lower() for skip in
-                   ["style library", "site assets", "site collection", "form templates"]):
-                continue
-
-            # Get files recursively via REST
-            await _collect_files_from_folder(
-                page, site_url, root_url, lib_title, updated_since, files, depth=0
-            )
-
+        resp = session.get(page_url, timeout=REQUEST_TIMEOUT)
+        if resp.status_code != 200:
+            return ""
+        return _html_to_text(resp.text)
     except Exception as e:
-        logger.error(f"SharePoint library list error: {e}")
-    finally:
-        await page.close()
+        logger.warning(f"SharePoint page fetch failed '{page_url}': {e}")
+        return ""
+
+
+def _html_to_text(html: str) -> str:
+    """Extract readable text from SharePoint page HTML."""
+    # Remove noise elements
+    for tag in ["script", "style", "nav", "header", "footer", "aside", "noscript"]:
+        html = re.sub(rf"<{tag}[^>]*>.*?</{tag}>", " ", html,
+                      flags=re.DOTALL | re.IGNORECASE)
+    # Table cells
+    html = re.sub(r"<td[^>]*>", " | ", html, flags=re.IGNORECASE)
+    html = re.sub(r"<tr[^>]*>", "\n", html, flags=re.IGNORECASE)
+    # Lists
+    html = re.sub(r"<li[^>]*>", "\n• ", html, flags=re.IGNORECASE)
+    # Block elements
+    html = re.sub(r"<(p|div|br|h[1-6])[^>]*>", "\n", html, flags=re.IGNORECASE)
+    # Strip tags
+    html = re.sub(r"<[^>]+>", " ", html)
+    # Entities
+    for pat, rep in [("&nbsp;", " "), ("&amp;", "&"), ("&lt;", "<"),
+                     ("&gt;", ">"), (r"&#\d+;", " "), (r"&[a-z]+;", " ")]:
+        html = re.sub(pat, rep, html)
+    # Clean whitespace
+    lines = [l.strip() for l in html.splitlines() if len(l.strip()) > 3]
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(lines))[:50_000]
+
+
+# ── Document libraries ────────────────────────────────────────────────────────
+
+def _get_libraries(session: requests.Session, site_url: str) -> list[dict]:
+    """Get all document libraries (BaseTemplate=101, not hidden)."""
+    url  = (
+        f"{site_url}/_api/web/lists"
+        f"?$filter=BaseTemplate eq 101 and Hidden eq false"
+        f"&$select=Title,RootFolder/ServerRelativeUrl&$expand=RootFolder"
+    )
+    data = _get(session, url)
+    if not data:
+        return []
+    libs = data.get("d", {}).get("results", [])
+    # Skip system libraries
+    skip = {"style library", "site assets", "form templates",
+            "site collection documents", "site pages"}
+    return [l for l in libs if l.get("Title", "").lower() not in skip]
+
+
+def _crawl_folder(
+    session: requests.Session,
+    site_url: str,
+    folder_url: str,
+    updated_since: datetime | None,
+    depth: int = 0,
+) -> list[dict]:
+    """Recursively collect all supported files under a folder."""
+    if depth > 8:
+        return []
+
+    base    = site_url.rstrip("/")
+    encoded = folder_url.replace("'", "''")
+    files   = []
+
+    # Files in this folder
+    files_url = (
+        f"{base}/_api/web/GetFolderByServerRelativeUrl('{encoded}')/Files"
+        f"?$select=Name,ServerRelativeUrl,TimeLastModified,Length,Author/Title"
+        f"&$expand=Author&$top=500"
+    )
+    data = _get(session, files_url)
+    if data:
+        for f in data.get("d", {}).get("results", []):
+            name = f.get("Name", "")
+            ext  = name.lower().rsplit(".", 1)[-1] if "." in name else ""
+            if ext not in SUPPORTED_EXTENSIONS:
+                continue
+            size_mb = int(f.get("Length") or 0) / (1024 * 1024)
+            if size_mb > MAX_FILE_SIZE_MB:
+                logger.info(f"Skipping large file ({size_mb:.1f}MB): {name}")
+                continue
+            modified = _parse_date(f.get("TimeLastModified", ""))
+            if updated_since and modified and modified <= updated_since:
+                continue
+            files.append(f)
+
+    # Subfolders
+    sub_url = (
+        f"{base}/_api/web/GetFolderByServerRelativeUrl('{encoded}')/Folders"
+        f"?$select=Name,ServerRelativeUrl&$filter=Name ne 'Forms'"
+    )
+    sub_data = _get(session, sub_url)
+    if sub_data:
+        for sub in sub_data.get("d", {}).get("results", []):
+            name = sub.get("Name", "")
+            if name.startswith(("_", ".")):
+                continue
+            sub_rel = sub.get("ServerRelativeUrl", "")
+            files.extend(_crawl_folder(
+                session, site_url, sub_rel, updated_since, depth + 1
+            ))
 
     return files
 
 
-async def _collect_files_from_folder(
-    page,
+def _download_file(
+    session: requests.Session,
     site_url: str,
-    folder_url: str,
-    lib_title: str,
-    updated_since: datetime | None,
-    files: list,
-    depth: int,
-):
-    """Recursively collect file metadata from a folder."""
-    if depth > 6 or len(files) >= MAX_FILES_PER_SITE:
-        return
-
-    encoded = folder_url.replace("'", "''")
-    api_url = (
-        f"{site_url}/_api/web/GetFolderByServerRelativeUrl('{encoded}')"
-        f"/Files?$select=Name,ServerRelativeUrl,TimeLastModified,Length"
-        f"&$top=500"
+    server_relative_url: str,
+) -> bytes:
+    """Download file content via SharePoint REST."""
+    encoded = server_relative_url.replace("'", "''")
+    url = (
+        f"{site_url.rstrip('/')}/_api/web"
+        f"/GetFileByServerRelativeUrl('{encoded}')/$value"
     )
-
     try:
-        await page.goto(api_url, timeout=NAV_TIMEOUT, wait_until="domcontentloaded")
-        content = await page.content()
-
-        names     = re.findall(r'"Name"\s*:\s*"([^"]+)"', content)
-        srv_urls  = re.findall(r'"ServerRelativeUrl"\s*:\s*"([^"]+)"', content)
-        modifieds = re.findall(r'"TimeLastModified"\s*:\s*"([^"]+)"', content)
-        lengths   = re.findall(r'"Length"\s*:\s*"(\d+)"', content)
-
-        for i, name in enumerate(names):
-            ext = name.lower().rsplit(".", 1)[-1] if "." in name else ""
-            if ext not in SUPPORTED_EXTENSIONS:
-                continue
-
-            size_bytes = int(lengths[i]) if i < len(lengths) else 0
-            size_mb    = size_bytes / (1024 * 1024)
-            if size_mb > MAX_FILE_SIZE_MB:
-                continue
-
-            modified = None
-            if i < len(modifieds):
-                try:
-                    modified = datetime.fromisoformat(
-                        modifieds[i].replace("Z", "+00:00")
-                    )
-                    if updated_since and modified <= updated_since:
-                        continue
-                except Exception:
-                    pass
-
-            srv_url = srv_urls[i] if i < len(srv_urls) else ""
-            files.append({
-                "name":       name,
-                "server_url": srv_url,
-                "library":    lib_title,
-                "modified":   modified,
-                "size_bytes": size_bytes,
-                "ext":        ext,
-            })
-
+        resp = session.get(url, timeout=REQUEST_TIMEOUT)
+        return resp.content if resp.status_code == 200 else b""
     except Exception as e:
-        logger.warning(f"SharePoint folder list error ({folder_url}): {e}")
+        logger.warning(f"File download failed '{server_relative_url}': {e}")
+        return b""
 
-    # Recurse into subfolders
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _parse_date(s: str) -> datetime | None:
+    if not s:
+        return None
     try:
-        sub_url = (
-            f"{site_url}/_api/web/GetFolderByServerRelativeUrl('{encoded}')"
-            f"/Folders?$select=Name,ServerRelativeUrl&$filter=Name ne 'Forms'"
-        )
-        await page.goto(sub_url, timeout=NAV_TIMEOUT, wait_until="domcontentloaded")
-        sub_content = await page.content()
-        sub_names   = re.findall(r'"Name"\s*:\s*"([^"]+)"', sub_content)
-        sub_urls    = re.findall(r'"ServerRelativeUrl"\s*:\s*"([^"]+)"', sub_content)
-
-        for j, sub_name in enumerate(sub_names):
-            if sub_name.startswith(("_", ".")):
-                continue
-            if j < len(sub_urls):
-                await _collect_files_from_folder(
-                    page, site_url, sub_urls[j], lib_title,
-                    updated_since, files, depth + 1
-                )
+        if s.startswith("/Date("):
+            return datetime.fromtimestamp(int(s[6:-2]) / 1000, tz=timezone.utc)
+        return datetime.fromisoformat(s.replace("Z", "+00:00"))
     except Exception:
-        pass
+        return None
 
 
-async def _download_and_extract_file(
-    context,
-    site_url: str,
-    file_info: dict,
-) -> str:
-    """Download a file via browser and extract its text."""
-    server_url = file_info["server_url"]
-    name       = file_info["name"]
-
-    if not server_url:
-        return ""
-
-    base     = "/".join(site_url.split("/")[:3])
-    file_url = f"{base}{server_url}"
-
-    page = await context.new_page()
-    try:
-        # Use download interception for file types
-        async with page.expect_download(timeout=30_000) as dl_info:
-            await page.goto(file_url, timeout=NAV_TIMEOUT)
-
-        download = await dl_info.value
-        with tempfile.NamedTemporaryFile(
-            suffix=f".{file_info['ext']}", delete=False
-        ) as tmp:
-            tmp_path = tmp.name
-
-        await download.save_as(tmp_path)
-
-        with open(tmp_path, "rb") as f:
-            raw = f.read()
-
-        os.unlink(tmp_path)
-        return extract_text(raw, name)
-
-    except Exception:
-        # Fallback — try direct fetch via JS
-        try:
-            result = await page.evaluate(
-                """async (url) => {
-                    const r = await fetch(url, {credentials: 'include'});
-                    if (!r.ok) return '';
-                    const buf = await r.arrayBuffer();
-                    return Array.from(new Uint8Array(buf));
-                }""",
-                file_url
-            )
-            if result:
-                raw = bytes(result)
-                return extract_text(raw, name)
-        except Exception as e:
-            logger.warning(f"SharePoint: could not download '{name}': {e}")
-
-        return ""
-    finally:
-        await page.close()
-
-
-# ── Main entry point ──────────────────────────────────────────────────────────
+# ── Main ──────────────────────────────────────────────────────────────────────
 
 async def fetch_documents(updated_since: datetime | None = None) -> list[Document]:
     """
-    Crawl all SharePoint sites using Edge browser (bypasses Zscaler).
-    Reads site list from sharepoint_sites.txt or SHAREPOINT_SITE_URLS env var.
+    Fetch all SharePoint content using Windows SSPI auth.
+    Reads site list from sharepoint_sites.txt.
     """
-    from playwright.async_api import async_playwright
-
     site_urls = _load_site_urls()
     if not site_urls:
         logger.warning(
@@ -499,97 +341,134 @@ async def fetch_documents(updated_since: datetime | None = None) -> list[Documen
         return []
 
     mode = "incremental" if updated_since else "full"
-    logger.info(f"SharePoint: {mode} sync across {len(site_urls)} site(s) via Edge browser")
+    logger.info(f"SharePoint: {mode} sync — {len(site_urls)} site(s)")
+
+    # One session for all sites — SSPI negotiates per-request
+    session = _make_session()
 
     all_documents: list[Document] = []
 
-    async with async_playwright() as pw:
-        context, browser = await _launch_browser(pw)
+    for site_url in site_urls:
+        site_url     = site_url.strip().rstrip("/")
+        site_display = site_url.split("/")[-1]
+        is_teams     = "/teams/" in site_url.lower()
 
-        try:
-            for site_url in site_urls:
-                site_url     = site_url.strip().rstrip("/")
-                site_display = site_url.rstrip("/").split("/")[-1]
-                is_teams     = "/teams/" in site_url.lower()
+        # Connectivity check
+        title = _check_connection(session, site_url)
+        if not title:
+            logger.error(
+                f"SharePoint: cannot connect to '{site_display}'. "
+                f"Check that requests-negotiate-sspi is installed and "
+                f"you are on the Citi network / VPN."
+            )
+            continue
 
-                logger.info(f"SharePoint: processing '{site_display}' ({'Teams' if is_teams else 'Site'})")
-                site_count = 0
+        logger.info(f"SharePoint: connected to '{title}' ({site_display})")
+        site_count = 0
 
-                # ── Site pages (skip for pure Teams document sites) ───────────
-                if not is_teams:
-                    try:
-                        pages = await _crawl_site_pages(
-                            context, site_url, site_display, updated_since
-                        )
-                        all_documents.extend(pages)
-                        site_count += len(pages)
-                        logger.info(f"SharePoint '{site_display}': {len(pages)} pages crawled")
-                    except Exception as e:
-                        logger.error(f"SharePoint pages error '{site_display}': {e}")
+        # ── 1. Site pages (not for Teams-only sites) ──────────────────────────
+        if not is_teams:
+            try:
+                pages = _get_site_pages(session, site_url, updated_since)
+                logger.info(f"SharePoint '{site_display}': {len(pages)} site pages")
 
-                # ── Document libraries ────────────────────────────────────────
-                try:
-                    file_list = await _get_library_file_list(
-                        context, site_url, updated_since
+                for page in pages:
+                    file_ref  = page.get("FileRef", "")
+                    abs_url   = page.get("EncodedAbsUrl", "")
+                    title_str = page.get("Title") or file_ref.split("/")[-1].replace(".aspx", "")
+                    author    = (page.get("Author") or {}).get("Title", "")
+                    modified  = _parse_date(page.get("Modified", ""))
+
+                    # Fetch actual page text
+                    page_url = abs_url or f"{site_url}{file_ref}"
+                    content  = _fetch_page_content(session, page_url)
+
+                    if not content:
+                        content = title_str
+
+                    doc = Document(
+                        external_id = file_ref or abs_url,
+                        source_type = SourceType.SHAREPOINT,
+                        source      = f"SharePoint / {site_display}",
+                        title       = title_str,
+                        content     = content,
+                        url         = page_url,
+                        author      = author or None,
+                        tags        = ["sharepoint", "page", site_display.lower()],
+                        metadata    = {
+                            "content_type": "page",
+                            "site":         site_display,
+                        },
+                        updated_at  = modified,
                     )
-                    logger.info(f"SharePoint '{site_display}': {len(file_list)} files to download")
+                    all_documents.append(doc)
+                    site_count += 1
 
-                    for file_info in file_list:
-                        name    = file_info["name"]
-                        content = await _download_and_extract_file(
-                            context, site_url, file_info
+            except Exception as e:
+                logger.error(f"SharePoint site pages error '{site_display}': {e}")
+
+        # ── 2. Document libraries ─────────────────────────────────────────────
+        try:
+            libraries = _get_libraries(session, site_url)
+            logger.info(f"SharePoint '{site_display}': {len(libraries)} document libraries")
+
+            for lib in libraries:
+                lib_title  = lib.get("Title", "Documents")
+                root_url   = (lib.get("RootFolder") or {}).get("ServerRelativeUrl", "")
+                if not root_url:
+                    continue
+
+                logger.info(f"SharePoint: crawling '{lib_title}'...")
+                items = _crawl_folder(session, site_url, root_url, updated_since)
+                logger.info(f"SharePoint '{lib_title}': {len(items)} files")
+
+                for item in items[:MAX_FILES_PER_LIB]:
+                    name       = item.get("Name", "Untitled")
+                    server_url = item.get("ServerRelativeUrl", "")
+                    modified   = _parse_date(item.get("TimeLastModified", ""))
+                    author     = (item.get("Author") or {}).get("Title", "")
+                    ext        = name.lower().rsplit(".", 1)[-1] if "." in name else ""
+                    folder     = "/".join(server_url.split("/")[:-1])
+
+                    raw     = _download_file(session, site_url, server_url)
+                    content = extract_text(raw, name) if raw else ""
+                    if not content:
+                        content = f"{name} {lib_title}"
+
+                    doc = Document(
+                        external_id = server_url or name,
+                        source_type = SourceType.SHAREPOINT,
+                        source      = f"SharePoint / {site_display} / {lib_title}",
+                        title       = name,
+                        content     = content,
+                        url         = f"{site_url}{server_url}",
+                        author      = author or None,
+                        tags        = [
+                            "sharepoint", ext,
+                            lib_title.lower().replace(" ", "_"),
+                            site_display.lower(),
+                        ],
+                        metadata    = {
+                            "content_type": ext,
+                            "library":      lib_title,
+                            "site":         site_display,
+                            "folder_path":  folder,
+                            "size_bytes":   int(item.get("Length") or 0),
+                        },
+                        updated_at  = modified,
+                    )
+                    all_documents.append(doc)
+                    site_count += 1
+
+                    if site_count % 50 == 0:
+                        logger.info(
+                            f"SharePoint '{site_display}': {site_count} docs processed..."
                         )
 
-                        if not content:
-                            content = f"{name} {file_info['library']}"
+        except Exception as e:
+            logger.error(f"SharePoint libraries error '{site_display}': {e}")
 
-                        folder = "/".join(
-                            file_info["server_url"].split("/")[:-1]
-                        ) if file_info["server_url"] else ""
-
-                        base     = "/".join(site_url.split("/")[:3])
-                        file_url = f"{base}{file_info['server_url']}"
-
-                        doc = Document(
-                            external_id = file_info["server_url"] or name,
-                            source_type = SourceType.SHAREPOINT,
-                            source      = f"SharePoint / {site_display} / {file_info['library']}",
-                            title       = name,
-                            content     = content,
-                            url         = file_url,
-                            author      = None,
-                            tags        = [
-                                "sharepoint",
-                                file_info["ext"],
-                                file_info["library"].lower().replace(" ", "_"),
-                                site_display.lower(),
-                            ],
-                            metadata    = {
-                                "content_type": file_info["ext"],
-                                "library":      file_info["library"],
-                                "site":         site_display,
-                                "folder_path":  folder,
-                                "size_bytes":   file_info["size_bytes"],
-                            },
-                            updated_at  = file_info["modified"],
-                        )
-                        all_documents.append(doc)
-                        site_count += 1
-
-                        if site_count % 25 == 0:
-                            logger.info(
-                                f"SharePoint '{site_display}': {site_count} docs so far..."
-                            )
-
-                except Exception as e:
-                    logger.error(f"SharePoint files error '{site_display}': {e}")
-
-                logger.info(f"SharePoint '{site_display}': done — {site_count} total")
-
-        finally:
-            await context.close()
-            if browser:
-                await browser.close()
+        logger.info(f"SharePoint '{site_display}': done — {site_count} total")
 
     logger.info(f"SharePoint: TOTAL {len(all_documents)} documents")
     return all_documents
