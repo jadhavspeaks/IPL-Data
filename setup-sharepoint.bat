@@ -2,14 +2,14 @@
 echo ============================================================
 echo  SharePoint Setup
 echo ============================================================
-echo.
 call conda activate ekm
-echo Installing SharePoint auth packages...
-pip install requests-negotiate-sspi==0.5.2 requests-ntlm==1.3.0
+echo Installing Office365 REST client...
+pip install Office365-REST-Python-Client==2.5.9
 echo.
-echo Done! Now:
-echo  1. Edit sharepoint_sites.txt - add your SharePoint site URLs
-echo  2. Restart backend and click Sync All
-echo  3. No username/password needed - uses your Windows login
+echo Done! Now add to your .env file:
+echo   SHAREPOINT_USERNAME=firstname.lastname@citi.com
+echo   SHAREPOINT_PASSWORD=your-windows-password
+echo.
+echo Then add sites to sharepoint_sites.txt and restart backend.
 echo ============================================================
 pause
