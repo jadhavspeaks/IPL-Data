@@ -47,12 +47,16 @@ def _get_session(site_url: str) -> requests.Session:
     rt_fa    = settings.sharepoint_rt_fa
 
     if fed_auth or rt_fa:
-        # ── Cookie auth (most reliable for SPO behind corp network) ──────────
+        # ── Cookie auth — must set domain so requests sends them ─────────────
+        # Extract domain from first site URL e.g. citi.sharepoint.com
+        site_urls = settings.sharepoint_site_url_list
+        domain = site_urls[0].split("/")[2] if site_urls else "sharepoint.com"
+
         if fed_auth:
-            session.cookies.set("FedAuth", fed_auth)
+            session.cookies.set("FedAuth", fed_auth, domain=domain, path="/")
         if rt_fa:
-            session.cookies.set("rtFa", rt_fa)
-        logger.info("SharePoint: using cookie-based auth (FedAuth/rtFa)")
+            session.cookies.set("rtFa", rt_fa, domain=domain, path="/")
+        logger.info(f"SharePoint: using cookie-based auth for domain {domain}")
         return session
 
     username = settings.sharepoint_username
@@ -234,17 +238,24 @@ async def fetch_documents(updated_since: datetime | None = None) -> list[Documen
         logger.info(f"SharePoint: connecting to '{site_display}'...")
         session = _get_session(site_url)
 
-        # Quick connectivity check
-        test = _sp_get(session, f"{site_url}/_api/web?$select=Title")
+        # Quick connectivity check — /Title returns just the value, no query params needed
+        test = _sp_get(session, f"{site_url}/_api/web/Title")
+        if not test:
+            test = _sp_get(session, f"{site_url}/_api/web")
         if not test:
             logger.error(
                 f"SharePoint: cannot reach '{site_display}'. "
-                f"Check URL and credentials. Skipping."
+                f"Check site URL and that FedAuth/rtFa cookies are current. Skipping."
             )
             continue
 
-        site_title = test.get("d", {}).get("Title", site_display)
+        site_title = (
+            test.get("d", {}).get("value")
+            or test.get("d", {}).get("Title")
+            or site_display
+        )
         logger.info(f"SharePoint: connected to '{site_title}'")
+        site_doc_count = 0
         site_doc_count = 0
 
         # ── Site Pages ────────────────────────────────────────────────────────
