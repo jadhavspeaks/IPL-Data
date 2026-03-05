@@ -8,8 +8,10 @@ class Settings(BaseSettings):
     mongo_db:  str = "ekm"
 
     # ── SharePoint ─────────────────────────────────────────────────────────────
-    # Option A — Cookie auth (recommended for citi.sharepoint.com)
-    # Copy FedAuth and rtFa cookie values from browser dev tools
+    # Option A — Full cookie string (run utils/cookie_helper.py to generate)
+    sharepoint_all_cookies: str = ""
+
+    # Option B — Individual cookies
     sharepoint_fed_auth:   str = ""
     sharepoint_rt_fa:      str = ""
 

@@ -48,16 +48,22 @@ def _get_session(site_url: str) -> requests.Session:
     fed_auth = settings.sharepoint_fed_auth
     rt_fa    = settings.sharepoint_rt_fa
 
+    # ── Option A: Full cookie string (all cookies from browser) ─────────────
+    all_cookies = settings.sharepoint_all_cookies
+    if all_cookies:
+        session.headers["Cookie"] = all_cookies
+        logger.info("SharePoint: using full browser cookie string")
+        return session
+
+    # ── Option B: Individual FedAuth + rtFa cookies ───────────────────────
     if fed_auth or rt_fa:
-        # ── Cookie auth — send as raw Cookie header (most reliable) ──────────
-        # Cookie jar domain matching is unreliable; raw header always works
         cookie_parts = []
         if fed_auth:
             cookie_parts.append(f"FedAuth={fed_auth}")
         if rt_fa:
             cookie_parts.append(f"rtFa={rt_fa}")
         session.headers["Cookie"] = "; ".join(cookie_parts)
-        logger.info("SharePoint: using cookie-based auth (Cookie header)")
+        logger.info("SharePoint: using FedAuth/rtFa cookie auth")
         return session
 
     username = settings.sharepoint_username
