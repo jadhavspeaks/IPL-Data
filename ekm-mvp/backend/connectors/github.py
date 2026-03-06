@@ -19,6 +19,7 @@ Config (.env):
   GITHUB_MAX_COMMITS=200                # commits per repo (default 200)
 """
 
+import os
 import logging
 import httpx
 from datetime import datetime, timezone
@@ -61,9 +62,24 @@ def _headers() -> dict:
     return h
 
 
+def _proxy() -> str | None:
+    """Read proxy from env — tries all common var names."""
+    return (
+        os.environ.get("HTTPS_PROXY") or
+        os.environ.get("https_proxy") or
+        os.environ.get("HTTP_PROXY") or
+        os.environ.get("http_proxy")
+    )
+
+
 def _get(url: str, params: dict = None) -> dict | list | None:
     try:
-        resp = httpx.get(url, headers=_headers(), params=params, timeout=REQUEST_TIMEOUT, verify=False)
+        proxy = _proxy()
+        resp = httpx.get(
+            url, headers=_headers(), params=params,
+            timeout=REQUEST_TIMEOUT, verify=False,
+            proxy=proxy,   # httpx uses 'proxy' not 'proxies'
+        )
         if resp.status_code == 200:
             return resp.json()
         if resp.status_code == 403:
