@@ -153,6 +153,27 @@ def rank_smes(documents: list[dict]) -> list[dict]:
                 scores[assignee]           += comment_score
                 breakdown[assignee]["commented"] += comment_count
 
+        # ── GitHub commit author ──────────────────────────────────────────────
+        elif source_type == "github":
+            content_type = metadata.get("content_type", "")
+            author = _clean_name(
+                metadata.get("author_name") or doc.get("author")
+            )
+            if author and content_type == "commit":
+                scores[author]     += 3 * multiplier   # commits = strong signal
+                doc_counts[author] += 1
+                roles[author].add("Commit Author")
+                sources[author].add(source)
+                breakdown[author]["authored"] += 1
+                _update_last_active(author, updated_at)
+            elif author and content_type == "pull_request":
+                scores[author]     += 2 * multiplier
+                doc_counts[author] += 1
+                roles[author].add("PR Author")
+                sources[author].add(source)
+                breakdown[author]["authored"] += 1
+                _update_last_active(author, updated_at)
+
         # ── SharePoint document author ─────────────────────────────────────────
         elif source_type == "sharepoint":
             author = _clean_name(doc.get("author"))

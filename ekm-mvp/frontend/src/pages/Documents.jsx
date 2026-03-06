@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { listDocuments } from '../api'
 import { DocCard, EmptyState, Spinner, SourceBadge } from '../components/UI'
 
-const SOURCES = ['', 'sharepoint', 'confluence', 'jira']
-const SOURCE_LABELS = { '': 'All', sharepoint: 'SharePoint', confluence: 'Confluence', jira: 'Jira' }
+const SOURCES = ['', 'sharepoint', 'confluence', 'jira', 'github']
+const SOURCE_LABELS = { '': 'All', sharepoint: 'SharePoint', confluence: 'Confluence', jira: 'Jira', github: 'GitHub' }
 
 export default function Documents() {
   const [docs, setDocs] = useState(null)

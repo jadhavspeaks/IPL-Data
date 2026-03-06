@@ -19,8 +19,11 @@ Config (.env):
   GITHUB_MAX_COMMITS=200                # commits per repo (default 200)
 """
 
+import os
 import logging
-import httpx
+import requests
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from datetime import datetime, timezone
 from config import get_settings
 from models import Document, SourceType
@@ -61,9 +64,27 @@ def _headers() -> dict:
     return h
 
 
+def _proxies() -> dict | None:
+    """Read proxy from settings (loaded from .env)."""
+    proxy = (
+        settings.https_proxy or
+        settings.http_proxy or
+        os.environ.get("HTTPS_PROXY") or
+        os.environ.get("HTTP_PROXY")
+    )
+    if proxy:
+        logger.debug(f"GitHub: using proxy {proxy}")
+        return {"http": proxy, "https": proxy}
+    return None
+
+
 def _get(url: str, params: dict = None) -> dict | list | None:
     try:
-        resp = httpx.get(url, headers=_headers(), params=params, timeout=REQUEST_TIMEOUT, verify=False)
+        resp = requests.get(
+            url, headers=_headers(), params=params,
+            timeout=REQUEST_TIMEOUT, verify=False,
+            proxies=_proxies(),
+        )
         if resp.status_code == 200:
             return resp.json()
         if resp.status_code == 403:
@@ -181,16 +202,23 @@ def _process_commits(
         diff_text  = _build_diff_summary(files)
         file_names = [f.get("filename", "") for f in files]
 
-        # Build rich content for search indexing
+        # Build clean human-readable content (preview shown in UI)
+        # Keep diff separate so it doesn't pollute the description
+        file_summary = ", ".join(file_names[:10])
+        if len(file_names) > 10:
+            file_summary += f" (+{len(file_names)-10} more)"
+
+        adds = detail.get("stats", {}).get("additions", 0) if detail else 0
+        dels = detail.get("stats", {}).get("deletions", 0) if detail else 0
+
         content_parts = [
-            f"Commit: {sha[:12]}",
+            message,  # commit message first — this becomes the preview
             f"Author: {name}",
-            f"Date: {date}",
-            f"Message: {message}",
-            f"Files changed: {', '.join(file_names[:20])}",
+            f"Changed {len(file_names)} file(s): {file_summary}",
+            f"+{adds} additions, -{dels} deletions",
         ]
         if diff_text:
-            content_parts.append(f"\nDiff:\n{diff_text}")
+            content_parts.append(f"Diff summary:\n{diff_text}")
 
         content = "\n".join(content_parts)
 

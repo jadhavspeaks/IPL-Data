@@ -37,6 +37,12 @@ export function StatusBadge({ status }) {
 
 // ─── Document Card ────────────────────────────────────────────────────────────
 export function DocCard({ doc, onClick }) {
+  const isGitHub = doc.source_type === 'github'
+  const m = doc.metadata || {}
+  const contentType = m.content_type || ''
+  const isCommit = contentType === 'commit'
+  const isPR     = contentType === 'pull_request'
+
   return (
     <div
       className="card p-4 hover:shadow-md transition-shadow cursor-pointer"
@@ -46,8 +52,46 @@ export function DocCard({ doc, onClick }) {
         <h3 className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2">
           {doc.title}
         </h3>
-        <SourceBadge type={doc.source_type} />
+        <div className="flex items-center gap-1 shrink-0">
+          {isGitHub && (
+            <span className={`badge text-xs ${
+              isCommit ? 'bg-orange-50 text-orange-700' :
+              isPR     ? 'bg-purple-50 text-purple-700' :
+                         'bg-blue-50 text-blue-700'
+            }`}>
+              {isCommit ? '⬡ commit' : isPR ? '↔ PR' : '📄 file'}
+            </span>
+          )}
+          <SourceBadge type={doc.source_type} />
+        </div>
       </div>
+
+      {/* GitHub commit details */}
+      {isGitHub && isCommit && (
+        <div className="flex flex-wrap gap-2 mb-2">
+          {m.short_sha && (
+            <span className="text-xs font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+              {m.short_sha}
+            </span>
+          )}
+          {m.additions != null && (
+            <span className="text-xs text-green-600">+{m.additions}</span>
+          )}
+          {m.deletions != null && (
+            <span className="text-xs text-red-500">-{m.deletions}</span>
+          )}
+          {m.files_changed?.length > 0 && (
+            <span className="text-xs text-gray-400">{m.files_changed.length} files</span>
+          )}
+        </div>
+      )}
+
+      {/* PR details */}
+      {isGitHub && isPR && m.number && (
+        <div className="mb-2">
+          <span className="text-xs text-purple-600 font-medium">PR #{m.number}</span>
+        </div>
+      )}
 
       <p className="text-gray-500 text-xs leading-relaxed line-clamp-3 mb-3">
         {doc.content_preview || 'No preview available.'}
@@ -66,7 +110,21 @@ export function DocCard({ doc, onClick }) {
         )}
       </div>
 
-      {doc.tags?.length > 0 && (
+      {/* Files changed pills for commits */}
+      {isGitHub && isCommit && m.files_changed?.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-2">
+          {m.files_changed.slice(0, 4).map(f => (
+            <span key={f} className="badge bg-gray-50 text-gray-500 font-mono text-xs border border-gray-100">
+              {f.split('/').pop()}
+            </span>
+          ))}
+          {m.files_changed.length > 4 && (
+            <span className="text-xs text-gray-400">+{m.files_changed.length - 4} more</span>
+          )}
+        </div>
+      )}
+
+      {!isGitHub && doc.tags?.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
           {doc.tags.slice(0, 5).map(tag => (
             <span key={tag} className="badge bg-gray-100 text-gray-500">{tag}</span>
