@@ -1,0 +1,22 @@
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+motor==3.4.0
+pymongo==4.7.2
+pydantic==2.7.1
+pydantic-settings==2.2.1
+python-dotenv==1.0.1
+httpx==0.27.0
+msal==1.28.0
+atlassian-python-api==3.41.11
+apscheduler==3.10.4
+python-multipart==0.0.9
+requests==2.31.0
+
+# ── SharePoint file extraction ─────────────────────────────────────────────
+python-docx==1.1.0
+python-pptx==0.6.23
+openpyxl==3.1.2
+pdfplumber==0.11.0
+
+# ── SharePoint auth — modern auth via ADFS (no Azure AD needed) ───────────
+Office365-REST-Python-Client==2.5.9

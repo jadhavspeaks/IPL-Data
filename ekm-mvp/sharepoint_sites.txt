@@ -1,0 +1,11 @@
+# SharePoint Sites to Crawl
+# One URL per line. Lines starting with # are ignored.
+# Supports both /sites/ and /teams/ URLs.
+#
+# Examples:
+# https://citi.sharepoint.com/sites/cc-ee
+# https://citi.sharepoint.com/teams/AutoCon
+#
+# Add your URLs below:
+https://citi.sharepoint.com/sites/cc-ee
+https://citi.sharepoint.com/teams/AutoCon
