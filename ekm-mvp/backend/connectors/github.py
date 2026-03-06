@@ -21,7 +21,9 @@ Config (.env):
 
 import os
 import logging
-import httpx
+import requests
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from datetime import datetime, timezone
 from config import get_settings
 from models import Document, SourceType
@@ -62,23 +64,26 @@ def _headers() -> dict:
     return h
 
 
-def _proxy() -> str | None:
-    """Read proxy from env — tries all common var names."""
-    return (
+def _proxies() -> dict | None:
+    """Build proxy dict for requests — reads from env vars."""
+    proxy = (
         os.environ.get("HTTPS_PROXY") or
         os.environ.get("https_proxy") or
         os.environ.get("HTTP_PROXY") or
         os.environ.get("http_proxy")
     )
+    if proxy:
+        logger.debug(f"GitHub: using proxy {proxy}")
+        return {"http": proxy, "https": proxy}
+    return None
 
 
 def _get(url: str, params: dict = None) -> dict | list | None:
     try:
-        proxy = _proxy()
-        resp = httpx.get(
+        resp = requests.get(
             url, headers=_headers(), params=params,
             timeout=REQUEST_TIMEOUT, verify=False,
-            proxy=proxy,   # httpx uses 'proxy' not 'proxies'
+            proxies=_proxies(),
         )
         if resp.status_code == 200:
             return resp.json()
