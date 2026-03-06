@@ -65,12 +65,12 @@ def _headers() -> dict:
 
 
 def _proxies() -> dict | None:
-    """Build proxy dict for requests — reads from env vars."""
+    """Read proxy from settings (loaded from .env)."""
     proxy = (
+        settings.https_proxy or
+        settings.http_proxy or
         os.environ.get("HTTPS_PROXY") or
-        os.environ.get("https_proxy") or
-        os.environ.get("HTTP_PROXY") or
-        os.environ.get("http_proxy")
+        os.environ.get("HTTP_PROXY")
     )
     if proxy:
         logger.debug(f"GitHub: using proxy {proxy}")
