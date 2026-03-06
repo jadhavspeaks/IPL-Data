@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     github_org:         str = ""   # crawl all repos in an org
     github_max_commits: int = 200  # commits per repo per sync
 
+    # ── Proxy (Zscaler / corporate) ───────────────────────────────────────────
+    https_proxy:        str = ""   # e.g. http://127.0.0.1:9000
+    http_proxy:         str = ""
+
     # ── App ───────────────────────────────────────────────────────────────────
     sync_interval_minutes: int = 60
     max_results_per_page:  int = 20
