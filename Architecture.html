@@ -1,2430 +1,432 @@
 <!DOCTYPE html>
-
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Enterprise No-Code ETL Framework — Military Grade</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<title>EDF v6 - Enterprise Data Framework</title>
+
 <style>
-:root {
-  --bg:        #04080f;
-  --s1:        #080e1a;
-  --s2:        #0c1422;
-  --s3:        #101c2e;
-  --border:    #162236;
-  --border2:   #1e3050;
-  --border3:   #264060;
-  --navy:      #003874;
-  --blue:      #0052CC;
-  --blue2:     #1a6bde;
-  --teal:      #0891B2;
-  --cyan:      #06b6d4;
-  --cyan2:     #22d3ee;
-  --green:     #059669;
-  --green2:    #10b981;
-  --orange:    #d97706;
-  --orange2:   #f59e0b;
-  --red:       #dc2626;
-  --red2:      #ef4444;
-  --purple:    #7c3aed;
-  --purple2:   #8b5cf6;
-  --gold:      #ca8a04;
-  --gold2:     #fbbf24;
-  --text:      #cdd9e8;
-  --text2:     #94a3b8;
-  --text3:     #546e8a;
-  --dim:       #1e3050;
-}
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-background: var(–bg);
-color: var(–text);
-font-family: ‘IBM Plex Sans’, sans-serif;
-font-size: 13px;
-line-height: 1.6;
-min-height: 100vh;
-overflow-x: hidden;
-}
-
-/* animated scanline */
-body::after {
-content: ‘’;
-position: fixed; inset: 0;
-background: repeating-linear-gradient(
-0deg,
-transparent,
-transparent 2px,
-rgba(6,182,212,0.008) 2px,
-rgba(6,182,212,0.008) 4px
-);
-pointer-events: none;
-z-index: 9999;
-}
-
-/* grid bg */
-body::before {
-content: ‘’;
-position: fixed; inset: 0;
-background-image:
-linear-gradient(rgba(6,182,212,0.025) 1px, transparent 1px),
-linear-gradient(90deg, rgba(6,182,212,0.025) 1px, transparent 1px);
-background-size: 48px 48px;
-pointer-events: none;
-z-index: 0;
-}
-
-/* ── LAYOUT ── */
-.app { display: flex; height: 100vh; overflow: hidden; position: relative; z-index: 1; }
-
-/* ── SIDEBAR ── */
-.sidebar {
-width: 240px;
-flex-shrink: 0;
-background: var(–s1);
-border-right: 1px solid var(–border);
-display: flex;
-flex-direction: column;
-overflow-y: auto;
-}
-
-.sidebar-logo {
-padding: 20px 18px 16px;
-border-bottom: 1px solid var(–border);
-}
-
-.logo-badge {
-display: inline-flex;
-align-items: center;
-gap: 6px;
-background: rgba(6,182,212,0.08);
-border: 1px solid rgba(6,182,212,0.2);
-border-radius: 4px;
-padding: 4px 8px;
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 9px;
-letter-spacing: 2px;
-color: var(–cyan);
-text-transform: uppercase;
-margin-bottom: 8px;
-}
-
-.logo-badge::before {
-content:’’;
-width:6px; height:6px;
-background:var(–cyan);
-border-radius:50%;
-animation: blink 1.5s infinite;
-}
-
-.logo-title {
-font-size: 13px;
-font-weight: 700;
-color: var(–text);
-letter-spacing: 0.3px;
-line-height: 1.3;
-}
-
-.logo-sub {
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 9px;
-color: var(–text3);
-letter-spacing: 1px;
-margin-top: 3px;
-}
-
-.nav-section {
-padding: 12px 0 4px;
-}
-
-.nav-label {
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 9px;
-letter-spacing: 2px;
-color: var(–text3);
-text-transform: uppercase;
-padding: 0 18px;
-margin-bottom: 4px;
-}
-
-.nav-item {
-display: flex;
-align-items: center;
-gap: 10px;
-padding: 9px 18px;
-cursor: pointer;
-transition: all 0.15s;
-border-left: 2px solid transparent;
-font-size: 12px;
-color: var(–text2);
-}
-
-.nav-item:hover { background: var(–s2); color: var(–text); }
-.nav-item.active {
-background: rgba(6,182,212,0.06);
-border-left-color: var(–cyan);
-color: var(–cyan);
-}
-
-.nav-icon {
-font-size: 14px;
-width: 18px;
-text-align: center;
-}
-
-.nav-badge {
-margin-left: auto;
-background: var(–s3);
-border: 1px solid var(–border2);
-border-radius: 3px;
-padding: 1px 5px;
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 9px;
-color: var(–text3);
-}
-
-/* ── MAIN ── */
-.main {
-flex: 1;
-overflow-y: auto;
-display: flex;
-flex-direction: column;
-}
-
-.topbar {
-display: flex;
-align-items: center;
-padding: 0 28px;
-height: 52px;
-border-bottom: 1px solid var(–border);
-background: var(–s1);
-gap: 16px;
-flex-shrink: 0;
-}
-
-.topbar-title {
-font-size: 13px;
-font-weight: 600;
-color: var(–text);
-}
-
-.topbar-path {
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 10px;
-color: var(–text3);
-}
-
-.topbar-spacer { flex: 1; }
-
-.status-pill {
-display: flex;
-align-items: center;
-gap: 6px;
-padding: 4px 10px;
-border-radius: 4px;
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 9px;
-letter-spacing: 1px;
-}
-
-.status-pill.ok { background: rgba(5,150,105,0.1); border:1px solid rgba(5,150,105,0.3); color:var(–green2); }
-.status-pill.ok::before { content:’’; width:6px; height:6px; background:var(–green2); border-radius:50%; animation: blink 2s infinite; }
-.status-pill.warn { background: rgba(217,119,6,0.1); border:1px solid rgba(217,119,6,0.3); color:var(–orange2); }
-.status-pill.err { background: rgba(220,38,38,0.1); border:1px solid rgba(220,38,38,0.3); color:var(–red2); }
-
-.content { padding: 28px; flex: 1; }
-
-/* ── VIEWS ── */
-.view { display: none; }
-.view.active { display: block; animation: fadeIn 0.25s ease; }
-
-@keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: none; } }
-@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
-@keyframes pulse-border { 0%,100%{box-shadow:0 0 0 0 rgba(6,182,212,0.3);} 50%{box-shadow:0 0 0 4px rgba(6,182,212,0);} }
-@keyframes slideRight { from{width:0;} to{width:var(–w);} }
-
-/* ── SECTION HEADING ── */
-.sec-head {
-display: flex;
-align-items: flex-end;
-gap: 12px;
-margin-bottom: 20px;
-}
-
-.sec-title {
-font-size: 16px;
-font-weight: 700;
-color: var(–text);
-letter-spacing: -0.3px;
-}
-
-.sec-sub {
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 10px;
-color: var(–text3);
-letter-spacing: 1px;
-margin-bottom: 2px;
-}
-
-/* ── CARDS ── */
-.card {
-background: var(–s1);
-border: 1px solid var(–border);
-border-radius: 8px;
-overflow: hidden;
-}
-
-.card-head {
-display: flex;
-align-items: center;
-gap: 10px;
-padding: 12px 16px;
-border-bottom: 1px solid var(–border);
-background: rgba(0,0,0,0.2);
-}
-
-.card-head-icon {
-width: 28px; height: 28px;
-border-radius: 6px;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 14px;
-flex-shrink: 0;
-}
-
-.card-head-title { font-size: 12px; font-weight: 600; }
-.card-head-sub { font-family:‘IBM Plex Mono’,monospace; font-size:10px; color:var(–text3); margin-top:1px; }
-.card-head-badge {
-margin-left: auto;
-padding: 3px 8px;
-border-radius: 3px;
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 9px;
-font-weight: 600;
-letter-spacing: 1px;
-}
-
-.card-body { padding: 16px; }
-
-/* ── GRID LAYOUTS ── */
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-.grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-
-/* ── CODE BLOCK ── */
-.code-wrap {
-background: var(–bg);
-border: 1px solid var(–border);
-border-radius: 6px;
-overflow: hidden;
-}
-
-.code-header {
-display: flex;
-align-items: center;
-gap: 6px;
-padding: 8px 14px;
-background: var(–s2);
-border-bottom: 1px solid var(–border);
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 10px;
-color: var(–text3);
-}
-
-.dot { width:10px;height:10px;border-radius:50%; }
-.dr{background:#ef4444;} .dy{background:#f59e0b;} .dg{background:#10b981;}
-
-pre {
-padding: 16px;
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 11px;
-line-height: 1.8;
-overflow-x: auto;
-white-space: pre;
-color: #718fa8;
-}
-
-.kw  { color: #8b5cf6; }
-.fn  { color: #06b6d4; }
-.str { color: #10b981; }
-.num { color: #f59e0b; }
-.cmt { color: #2a4060; font-style: italic; }
-.col { color: #22d3ee; }
-.op  { color: #94a3b8; }
-.val { color: #cdd9e8; }
-.err { color: #ef4444; }
-.ok  { color: #10b981; }
-.hl  { background: rgba(6,182,212,0.08); border-radius: 2px; padding: 0 2px; }
-
-/* ── TABLE ── */
-.tbl { width:100%; border-collapse:collapse; }
-.tbl th {
-padding: 8px 12px;
-text-align: left;
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 9px;
-letter-spacing: 1.5px;
-text-transform: uppercase;
-color: var(–text3);
-background: var(–s2);
-border-bottom: 1px solid var(–border2);
-}
-
-.tbl td {
-padding: 9px 12px;
-font-size: 11px;
-border-bottom: 1px solid var(–border);
-vertical-align: top;
-}
-
-.tbl tr:hover td { background: rgba(6,182,212,0.03); }
-
-.mono { font-family: ‘IBM Plex Mono’, monospace; font-size: 10px; }
-.dim  { color: var(–text3); }
-.cyan-t { color: var(–cyan2); }
-.green-t { color: var(–green2); }
-.red-t   { color: var(–red2); }
-.orange-t{ color: var(–orange2); }
-.gold-t  { color: var(–gold2); }
-.purple-t{ color: var(–purple2); }
-
-/* ── TAGS ── */
-.tag {
-display: inline-block;
-padding: 2px 7px;
-border-radius: 3px;
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 9px;
-font-weight: 600;
-letter-spacing: 0.5px;
-}
-
-.tag-cyan   { background:rgba(6,182,212,0.1);  border:1px solid rgba(6,182,212,0.3);  color:var(–cyan2); }
-.tag-green  { background:rgba(5,150,105,0.1);  border:1px solid rgba(5,150,105,0.3);  color:var(–green2); }
-.tag-orange { background:rgba(217,119,6,0.1);  border:1px solid rgba(217,119,6,0.3);  color:var(–orange2); }
-.tag-red    { background:rgba(220,38,38,0.1);  border:1px solid rgba(220,38,38,0.3);  color:var(–red2); }
-.tag-purple { background:rgba(124,58,237,0.1); border:1px solid rgba(124,58,237,0.3); color:var(–purple2); }
-.tag-gold   { background:rgba(202,138,4,0.1);  border:1px solid rgba(202,138,4,0.3);  color:var(–gold2); }
-.tag-blue   { background:rgba(0,82,204,0.15);  border:1px solid rgba(0,82,204,0.4);   color:#60a5fa; }
-
-/* ── PIPELINE BUILDER ── */
-.builder-wrap { display: flex; gap: 20px; }
-.builder-left { flex: 1; min-width: 0; }
-.builder-right { width: 420px; flex-shrink: 0; }
-
-.input-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: flex-start; }
-
-.inp-label {
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 10px;
-color: var(–text3);
-margin-bottom: 5px;
-letter-spacing: 0.5px;
-}
-
-input[type=text], textarea, select {
-width: 100%;
-background: var(–bg);
-border: 1px solid var(–border2);
-border-radius: 5px;
-padding: 8px 10px;
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 11px;
-color: var(–text);
-outline: none;
-transition: border-color 0.15s;
-resize: vertical;
-}
-
-input[type=text]:focus, textarea:focus, select:focus {
-border-color: var(–cyan);
-box-shadow: 0 0 0 2px rgba(6,182,212,0.1);
-}
-
-select { cursor: pointer; }
-select option { background: var(–s2); }
-
-.btn {
-padding: 8px 16px;
-border-radius: 5px;
-border: none;
-cursor: pointer;
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 11px;
-font-weight: 600;
-letter-spacing: 0.5px;
-transition: all 0.15s;
-white-space: nowrap;
-}
-
-.btn-primary {
-background: var(–cyan);
-color: #000;
-}
-.btn-primary:hover { background: var(–cyan2); transform: translateY(-1px); }
-
-.btn-secondary {
-background: var(–s2);
-color: var(–text2);
-border: 1px solid var(–border2);
-}
-.btn-secondary:hover { border-color: var(–cyan); color: var(–cyan); }
-
-.btn-danger {
-background: rgba(220,38,38,0.1);
-color: var(–red2);
-border: 1px solid rgba(220,38,38,0.3);
-}
-.btn-danger:hover { background: rgba(220,38,38,0.2); }
-
-.btn-sm { padding: 5px 10px; font-size: 10px; }
-
-/* ── STEP CARD ── */
-.step-card {
-background: var(–s2);
-border: 1px solid var(–border);
-border-radius: 6px;
-padding: 12px 14px;
-margin-bottom: 8px;
-display: flex;
-align-items: flex-start;
-gap: 12px;
-transition: border-color 0.15s;
-}
-
-.step-card:hover { border-color: var(–border3); }
-
-.step-num {
-width: 24px; height: 24px;
-background: var(–s3);
-border: 1px solid var(–border2);
-border-radius: 4px;
-display: flex;
-align-items: center;
-justify-content: center;
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 10px;
-font-weight: 600;
-color: var(–cyan);
-flex-shrink: 0;
-}
-
-.step-content { flex: 1; min-width: 0; }
-.step-type { font-family:‘IBM Plex Mono’,monospace; font-size:10px; color:var(–cyan2); font-weight:600; margin-bottom:3px; }
-.step-sql { font-family:‘IBM Plex Mono’,monospace; font-size:10px; color:var(–text2); word-break:break-all; line-height:1.5; }
-.step-alias { font-family:‘IBM Plex Mono’,monospace; font-size:10px; color:var(–green2); margin-top:3px; }
-
-/* ── AUDIT COLUMNS ── */
-.audit-grid {
-display: grid;
-grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-gap: 8px;
-}
-
-.audit-col {
-background: var(–s2);
-border: 1px solid var(–border);
-border-radius: 6px;
-padding: 10px 12px;
-border-left: 3px solid var(–cyan);
-}
 
-.audit-col-name {
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 10px;
-font-weight: 600;
-color: var(–cyan2);
-margin-bottom: 3px;
-}
+/* =========================
+RESET
+========================= */
 
-.audit-col-type {
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 9px;
-color: var(–orange2);
-margin-bottom: 3px;
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
 }
 
-.audit-col-desc {
-font-size: 11px;
-color: var(–text3);
-line-height: 1.5;
+:root{
+--bg:#04080f;
+--panel:#0c1422;
+--panel2:#101c2e;
+--border:#162236;
+--text:#cdd9e8;
+--muted:#94a3b8;
+--accent:#06b6d4;
+--success:#10b981;
+--warn:#f59e0b;
+--danger:#ef4444;
 }
 
-/* ── EMAIL TEMPLATE ── */
-.email-preview {
-background: #ffffff;
-border-radius: 6px;
-overflow: hidden;
-font-family: ‘IBM Plex Sans’, Arial, sans-serif;
-color: #1e293b;
-font-size: 12px;
+body{
+background:var(--bg);
+color:var(--text);
+font-family:Segoe UI,system-ui,sans-serif;
+font-size:13px;
 }
 
-.email-header-bar {
-padding: 16px 20px;
-display: flex;
-align-items: center;
-gap: 10px;
+.app{
+display:flex;
+height:100vh;
 }
 
-.email-body-wrap { padding: 20px; }
-
-.email-stat-row {
-display: flex;
-gap: 8px;
-margin: 14px 0;
+.sidebar{
+width:240px;
+background:var(--panel);
+border-right:1px solid var(--border);
+padding:12px;
+overflow:auto;
 }
 
-.email-stat {
-flex: 1;
-border-radius: 6px;
-padding: 10px;
-text-align: center;
+.logo{
+font-size:14px;
+font-weight:600;
+margin-bottom:16px;
 }
 
-.email-table {
-width: 100%;
-border-collapse: collapse;
-font-size: 11px;
-margin-top: 10px;
+.nav-item{
+padding:8px;
+cursor:pointer;
+border-radius:4px;
+margin-bottom:4px;
+color:var(--muted);
 }
 
-.email-table th {
-padding: 6px 10px;
-text-align: left;
-background: #f1f5f9;
-color: #475569;
-font-size: 10px;
-letter-spacing: 0.5px;
+.nav-item:hover{
+background:var(--panel2);
+color:var(--text);
 }
 
-.email-table td {
-padding: 6px 10px;
-border-bottom: 1px solid #f1f5f9;
-color: #334155;
+.nav-item.active{
+background:rgba(6,182,212,.08);
+color:var(--accent);
 }
-
-/* ── PROGRESS BAR ── */
-.prog-bar-wrap { background: var(–s3); border-radius: 3px; height: 6px; overflow: hidden; margin-top: 4px; }
-.prog-bar { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
 
-/* ── ERROR LOG ── */
-.log-entry {
-display: flex;
-gap: 10px;
-padding: 8px 10px;
-border-radius: 5px;
-margin-bottom: 4px;
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 10px;
-line-height: 1.6;
-border-left: 3px solid transparent;
+.main{
+flex:1;
+display:flex;
+flex-direction:column;
 }
-
-.log-entry.info  { background:rgba(6,182,212,0.04); border-left-color:var(–cyan); }
-.log-entry.warn  { background:rgba(217,119,6,0.06);  border-left-color:var(–orange2); }
-.log-entry.error { background:rgba(220,38,38,0.06);  border-left-color:var(–red2); }
-.log-entry.ok    { background:rgba(5,150,105,0.05);  border-left-color:var(–green2); }
-
-.log-ts { color:var(–text3); flex-shrink:0; min-width:150px; }
-.log-lvl { font-weight:700; flex-shrink:0; min-width:50px; }
-.log-entry.info  .log-lvl { color:var(–cyan2); }
-.log-entry.warn  .log-lvl { color:var(–orange2); }
-.log-entry.error .log-lvl { color:var(–red2); }
-.log-entry.ok    .log-lvl { color:var(–green2); }
-.log-msg { color:var(–text2); }
 
-/* ── FLOW DIAGRAM ── */
-.flow-node {
-background: var(–s2);
-border: 1px solid var(–border2);
-border-radius: 8px;
-padding: 12px 16px;
-text-align: center;
-position: relative;
+.topbar{
+padding:14px;
+border-bottom:1px solid var(--border);
+background:var(--panel);
 }
 
-.flow-connector {
-display: flex;
-align-items: center;
-justify-content: center;
-height: 36px;
-color: var(–border3);
-font-size: 18px;
-position: relative;
+.title{
+font-size:16px;
+font-weight:600;
 }
 
-.flow-connector::before {
-content: ‘’;
-position: absolute;
-left: 50%; top: 0; bottom: 0;
-width: 1px;
-background: linear-gradient(to bottom, var(–border2), var(–border3));
-transform: translateX(-50%);
+.content{
+padding:18px;
+overflow:auto;
 }
 
-/* ── MULTI SOURCE ── */
-.source-card {
-background: var(–s2);
-border: 1px solid var(–border);
-border-radius: 8px;
-padding: 14px;
-display: flex;
-align-items: flex-start;
-gap: 12px;
-transition: all 0.2s;
+.card{
+background:var(--panel);
+border:1px solid var(--border);
+border-radius:6px;
+margin-bottom:14px;
 }
 
-.source-card:hover { border-color: var(–border3); transform: translateY(-1px); }
-
-.source-icon {
-width: 36px; height: 36px;
-border-radius: 8px;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 18px;
-flex-shrink: 0;
+.card-header{
+padding:10px 12px;
+border-bottom:1px solid var(--border);
+font-weight:600;
 }
 
-/* ── STAT CARDS ── */
-.stat-card {
-background: var(–s1);
-border: 1px solid var(–border);
-border-radius: 8px;
-padding: 16px;
+.card-body{
+padding:12px;
 }
 
-.stat-num {
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 28px;
-font-weight: 700;
-line-height: 1;
-margin-bottom: 4px;
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:12px;
 }
 
-.stat-label {
-font-size: 11px;
-color: var(–text3);
-letter-spacing: 0.3px;
+.stat{
+background:var(--panel);
+border:1px solid var(--border);
+padding:12px;
+border-radius:6px;
 }
 
-.stat-delta {
-font-family: ‘IBM Plex Mono’, monospace;
-font-size: 10px;
-margin-top: 4px;
+.stat-num{
+font-size:20px;
+font-weight:600;
 }
 
-/* ── TOOLTIP ── */
-.tip {
-position: fixed;
-background: var(–s2);
-border: 1px solid var(–border3);
-border-radius: 6px;
-padding: 10px 12px;
-font-size: 11px;
-max-width: 260px;
-z-index: 9000;
-pointer-events: none;
-opacity: 0;
-transition: opacity 0.1s;
-box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+.code{
+background:#020617;
+border:1px solid var(--border);
+padding:12px;
+border-radius:6px;
+font-family:monospace;
+font-size:12px;
+overflow:auto;
+white-space:pre;
 }
-.tip.show { opacity: 1; }
-.tip-title { font-weight:600; color:var(–cyan2); margin-bottom:4px; font-size:11px; }
-.tip-body  { color:var(–text3); font-family:‘IBM Plex Mono’,monospace; font-size:10px; line-height:1.6; }
-
-/* SCROLLBAR */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(–bg); }
-::-webkit-scrollbar-thumb { background: var(–border2); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(–border3); }
 
-/* RESPONSIVE */
-@media(max-width:1100px) {
-.builder-wrap { flex-direction:column; }
-.builder-right { width:100%; }
-.grid-4 { grid-template-columns:repeat(2,1fr); }
-}
-@media(max-width:800px) {
-.sidebar { width:200px; }
-.grid-3,.grid-2 { grid-template-columns:1fr; }
-.content { padding:16px; }
-}
 </style>
 
 </head>
-<body>
 
-<div class="tip" id="tooltip"><div class="tip-title" id="tt-t"></div><div class="tip-body" id="tt-b"></div></div>
+<body>
 
 <div class="app">
 
-<!-- ══════════ SIDEBAR ══════════ -->
-
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-badge">EDF v3.0</div>
-    <div class="logo-title">Enterprise Data<br>Framework</div>
-    <div class="logo-sub">Config-Driven · No-Code · Portable</div>
-  </div>
-
-  <div class="nav-section">
-    <div class="nav-label">Framework</div>
-    <div class="nav-item active" onclick="nav(this,'overview')"><span class="nav-icon">🏗</span> Architecture</div>
-    <div class="nav-item" onclick="nav(this,'builder')"><span class="nav-icon">⚙️</span> Pipeline Builder <span class="nav-badge">AUTO</span></div>
-    <div class="nav-item" onclick="nav(this,'sources')"><span class="nav-icon">🔌</span> Multi-Source</div>
-    <div class="nav-item" onclick="nav(this,'audit')"><span class="nav-icon">📋</span> Audit Columns</div>
-  </div>
-
-  <div class="nav-section">
-    <div class="nav-label">Monitoring</div>
-    <div class="nav-item" onclick="nav(this,'errors')"><span class="nav-icon">🚨</span> Error Logging</div>
-    <div class="nav-item" onclick="nav(this,'email')"><span class="nav-icon">📧</span> Email Engine</div>
-    <div class="nav-item" onclick="nav(this,'sla')"><span class="nav-icon">⏱</span> SLA Monitor</div>
-    <div class="nav-item" onclick="nav(this,'dq')"><span class="nav-icon">✅</span> DQ Engine</div>
-  </div>
-
-  <div class="nav-section">
-    <div class="nav-label">Schema</div>
-    <div class="nav-item" onclick="nav(this,'oracle')"><span class="nav-icon">🗄</span> Oracle Schema</div>
-    <div class="nav-item" onclick="nav(this,'cloud')"><span class="nav-icon">☁️</span> Cloud Portability</div>
-    <div class="nav-item" onclick="nav(this,'ops')"><span class="nav-icon">📊</span> Ops Dashboard</div>
-  </div>
-</aside>
-
-<!-- ══════════ MAIN ══════════ -->
+<div class="sidebar" id="sidebar"></div>
 
 <div class="main">
-  <div class="topbar">
-    <div>
-      <div class="topbar-title" id="topbar-title">Architecture Overview</div>
-      <div class="topbar-path" id="topbar-path">EDF / Framework / Architecture</div>
-    </div>
-    <div class="topbar-spacer"></div>
-    <div class="status-pill ok">ORACLE CONNECTED</div>
-    <div class="status-pill ok">SPARK ONLINE</div>
-    <div class="status-pill warn" id="sla-pill">2 SLA AT RISK</div>
-  </div>
 
-  <div class="content">
+<div class="topbar">
 
-<!-- ══ VIEW: OVERVIEW ══ -->
-
-<div class="view active" id="view-overview">
-  <div class="sec-head">
-    <div><div class="sec-sub">ENTERPRISE DATA FRAMEWORK</div><div class="sec-title">Full Architecture — Plug & Play, Military Grade</div></div>
-  </div>
-
-  <!-- STAT STRIP -->
-
-  <div class="grid-4" style="margin-bottom:20px;">
-    <div class="stat-card">
-      <div class="stat-num" style="color:var(--cyan2);">12</div>
-      <div class="stat-label">Oracle Config Tables</div>
-      <div class="stat-delta" style="color:var(--green2);">↑ Single source of truth</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num" style="color:var(--green2);">8</div>
-      <div class="stat-label">Transform Primitives</div>
-      <div class="stat-delta" style="color:var(--green2);">↑ Auto-generated from SQL</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num" style="color:var(--gold2);">26</div>
-      <div class="stat-label">Audit Columns</div>
-      <div class="stat-delta" style="color:var(--gold2);">↑ Auto-appended every table</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num" style="color:var(--orange2);">4</div>
-      <div class="stat-label">Cloud Targets</div>
-      <div class="stat-delta" style="color:var(--orange2);">↑ Zero code migration</div>
-    </div>
-  </div>
-
-  <!-- FLOW ARCHITECTURE SVG -->
-
-  <div class="card" style="margin-bottom:20px;">
-    <div class="card-head">
-      <div class="card-head-icon" style="background:rgba(6,182,212,0.1); color:var(--cyan);">🏗</div>
-      <div><div class="card-head-title">End-to-End Data Pipeline Architecture</div><div class="card-head-sub">Config-driven · No-code BL · Auto-audit · Multi-source · Cloud-portable</div></div>
-      <div class="card-head-badge" style="background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);color:var(--cyan);">LIVE ARCH</div>
-    </div>
-    <div class="card-body" style="padding:0; overflow-x:auto;">
-<svg viewBox="0 0 1060 580" xmlns="http://www.w3.org/2000/svg" style="min-width:900px;width:100%;display:block;" font-family="IBM Plex Mono, monospace">
-  <defs>
-    <marker id="ah" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#264060"/></marker>
-    <marker id="ac" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#06b6d4"/></marker>
-    <marker id="ar" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#dc2626"/></marker>
-    <marker id="ag" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#059669"/></marker>
-    <linearGradient id="cyanGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#0891b2"/><stop offset="100%" stop-color="#0052cc"/></linearGradient>
-    <filter id="glow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-  </defs>
-
-  <!-- ORACLE STORE (TOP BAND) -->
-
-  <rect x="10" y="8" width="1040" height="115" rx="6" fill="#08040a" stroke="#3f1515" stroke-width="1.5"/>
-  <rect x="10" y="8" width="1040" height="20" rx="6" fill="#3f1515" fill-opacity="0.5"/>
-  <rect x="10" y="21" width="1040" height="7" fill="#3f1515" fill-opacity="0.5"/>
-  <text x="28" y="22" font-size="9" fill="#ef4444" letter-spacing="2">ORACLE CONFIG STORE — ALL BEHAVIOR DEFINED HERE — ZERO CODE FOR BUSINESS LOGIC</text>
-
-  <!-- Oracle table boxes -->
-
-  <rect x="25"  y="35" width="118" height="78" rx="5" fill="#100810" stroke="#3f1515" stroke-width="1"/>
-  <text x="35"  y="50" font-size="8" fill="#ef4444" font-weight="600">PIPELINE_REGISTRY</text>
-  <text x="35"  y="63" font-size="7.5" fill="#546e8a">pipeline_id, name</text>
-  <text x="35"  y="74" font-size="7.5" fill="#546e8a">source_path, target</text>
-  <text x="35"  y="85" font-size="7.5" fill="#546e8a">schedule, sla_mins</text>
-  <text x="35"  y="96" font-size="7.5" fill="#546e8a">active_flag, owner</text>
-  <text x="35" y="107" font-size="7" fill="#3f1515">─────────────────</text>
-
-  <rect x="152" y="35" width="118" height="78" rx="5" fill="#100810" stroke="#3f1515" stroke-width="1"/>
-  <text x="162" y="50" font-size="8" fill="#ef4444" font-weight="600">TRANSFORM_STEPS</text>
-  <text x="162" y="63" font-size="7.5" fill="#546e8a">step_id, pipeline_id</text>
-  <text x="162" y="74" font-size="7.5" fill="#546e8a">step_seq, step_type</text>
-  <text x="162" y="85" font-size="7.5" fill="#546e8a">step_sql, alias</text>
-  <text x="162" y="96" font-size="7.5" fill="#546e8a">depends_on_step</text>
-
-  <rect x="279" y="35" width="108" height="78" rx="5" fill="#100810" stroke="#3f1515" stroke-width="1"/>
-  <text x="289" y="50" font-size="8" fill="#ef4444" font-weight="600">SOURCE_CONFIG</text>
-  <text x="289" y="63" font-size="7.5" fill="#546e8a">src_id, src_type</text>
-  <text x="289" y="74" font-size="7.5" fill="#546e8a">conn_str, format</text>
-  <text x="289" y="85" font-size="7.5" fill="#546e8a">auth_type, schema</text>
-  <text x="289" y="96" font-size="7.5" fill="#546e8a">partition_col</text>
-
-  <rect x="396" y="35" width="105" height="78" rx="5" fill="#100810" stroke="#3f1515" stroke-width="1"/>
-  <text x="406" y="50" font-size="8" fill="#ef4444" font-weight="600">DQ_RULES</text>
-  <text x="406" y="63" font-size="7.5" fill="#546e8a">rule_id, type</text>
-  <text x="406" y="74" font-size="7.5" fill="#546e8a">expression, col</text>
-  <text x="406" y="85" font-size="7.5" fill="#546e8a">fail_action</text>
-  <text x="406" y="96" font-size="7.5" fill="#546e8a">severity, threshold</text>
-
-  <rect x="510" y="35" width="118" height="78" rx="5" fill="#100810" stroke="#3f1515" stroke-width="1"/>
-  <text x="520" y="50" font-size="8" fill="#ef4444" font-weight="600">AUDIT_COLUMNS</text>
-  <text x="520" y="63" font-size="7.5" fill="#546e8a">26 standard cols</text>
-  <text x="520" y="74" font-size="7.5" fill="#546e8a">auto-appended</text>
-  <text x="520" y="85" font-size="7.5" fill="#546e8a">every target table</text>
-  <text x="520" y="96" font-size="7.5" fill="#22d3ee">→ SRC,LOAD,PROC,SYS</text>
-
-  <rect x="637" y="35" width="108" height="78" rx="5" fill="#100810" stroke="#3f1515" stroke-width="1"/>
-  <text x="647" y="50" font-size="8" fill="#ef4444" font-weight="600">EMAIL_CONFIG</text>
-  <text x="647" y="63" font-size="7.5" fill="#546e8a">event_type, recip</text>
-  <text x="647" y="74" font-size="7.5" fill="#546e8a">template_id, subj</text>
-  <text x="647" y="85" font-size="7.5" fill="#546e8a">sla_threshold</text>
-  <text x="647" y="96" font-size="7.5" fill="#546e8a">pivot_cols (JSON)</text>
-
-  <rect x="754" y="35" width="108" height="78" rx="5" fill="#100810" stroke="#3f1515" stroke-width="1"/>
-  <text x="764" y="50" font-size="8" fill="#ef4444" font-weight="600">ERROR_LOG</text>
-  <text x="764" y="63" font-size="7.5" fill="#546e8a">error_id, run_id</text>
-  <text x="764" y="74" font-size="7.5" fill="#546e8a">error_type, stack</text>
-  <text x="764" y="85" font-size="7.5" fill="#546e8a">step_id, ts</text>
-  <text x="764" y="96" font-size="7.5" fill="#546e8a">retried, resolved</text>
-
-  <rect x="871" y="35" width="164" height="78" rx="5" fill="#100810" stroke="#3f1515" stroke-width="1"/>
-  <text x="881" y="50" font-size="8" fill="#ef4444" font-weight="600">SCHEMA_REGISTRY + LINEAGE</text>
-  <text x="881" y="63" font-size="7.5" fill="#546e8a">col_name, type, version</text>
-  <text x="881" y="74" font-size="7.5" fill="#546e8a">src→tgt mapping</text>
-  <text x="881" y="85" font-size="7.5" fill="#546e8a">effective_date, pii_flag</text>
-  <text x="881" y="96" font-size="7.5" fill="#546e8a">auto-populated by runner</text>
-
-  <!-- DATA PIPELINE BAND -->
-
-  <rect x="10" y="140" width="1040" height="195" rx="6" fill="#060c14" stroke="#162236" stroke-width="1"/>
-  <text x="28" y="158" font-size="9" fill="#264060" letter-spacing="2">DATA PIPELINE ZONES — IMMUTABLE RAW → SPARK ENGINE → CURATED → GOLD</text>
-
-  <!-- Source Systems -->
-
-  <rect x="25"  y="165" width="120" height="155" rx="6" fill="#0c1422" stroke="#d97706" stroke-width="1.5"/>
-  <rect x="25"  y="165" width="120" height="20" rx="6" fill="#d97706" fill-opacity="0.12"/>
-  <rect x="25"  y="179" width="120" height="6" fill="#d97706" fill-opacity="0.12"/>
-  <text x="35"  y="180" font-size="9" fill="#f59e0b" font-weight="700">SOURCES</text>
-  <text x="35"  y="200" font-size="8" fill="#546e8a">◆ RDBMS/Oracle</text>
-  <text x="35"  y="213" font-size="8" fill="#546e8a">◆ HDFS Files</text>
-  <text x="35"  y="226" font-size="8" fill="#546e8a">◆ REST APIs</text>
-  <text x="35"  y="239" font-size="8" fill="#546e8a">◆ Kafka Topics</text>
-  <text x="35"  y="252" font-size="8" fill="#546e8a">◆ SFTP/S3/GCS</text>
-  <text x="35"  y="265" font-size="8" fill="#546e8a">◆ CDC Streams</text>
-  <text x="35"  y="278" font-size="8" fill="#546e8a">◆ Multi-source JOIN</text>
-  <text x="35"  y="295" font-size="7.5" fill="#f59e0b">All via SOURCE_CONFIG</text>
-  <text x="35"  y="308" font-size="7.5" fill="#475569">No hardcoding</text>
-
-  <!-- RAW ZONE -->
-
-  <rect x="162" y="165" width="120" height="155" rx="6" fill="#0c1422" stroke="#f59e0b" stroke-width="1.5"/>
-  <rect x="162" y="165" width="120" height="20" rx="6" fill="#f59e0b" fill-opacity="0.1"/>
-  <rect x="162" y="179" width="120" height="6" fill="#f59e0b" fill-opacity="0.1"/>
-  <text x="172" y="180" font-size="9" fill="#f59e0b" font-weight="700">HDFS RAW ZONE</text>
-  <text x="172" y="200" font-size="8" fill="#546e8a">Immutable landing</text>
-  <text x="172" y="213" font-size="8" fill="#546e8a">Parquet / ORC / CSV</text>
-  <text x="172" y="226" font-size="8" fill="#546e8a">Partitioned by date</text>
-  <text x="172" y="239" font-size="8" fill="#546e8a">+26 AUDIT COLS</text>
-  <text x="172" y="252" font-size="8" fill="#546e8a">Source checksum</text>
-  <text x="172" y="265" font-size="8" fill="#546e8a">Hive external table</text>
-  <text x="172" y="295" font-size="7.5" fill="#f59e0b">Zero transforms here</text>
-  <text x="172" y="308" font-size="7.5" fill="#475569">Replay-safe</text>
-
-  <!-- SPARK ENGINE -->
-
-  <rect x="300" y="165" width="160" height="155" rx="6" fill="#050c18" stroke="#06b6d4" stroke-width="1.5"/>
-  <rect x="300" y="165" width="160" height="20" rx="6" fill="#06b6d4" fill-opacity="0.1"/>
-  <rect x="300" y="179" width="160" height="6" fill="#06b6d4" fill-opacity="0.1"/>
-  <text x="310" y="180" font-size="9" fill="#06b6d4" font-weight="700">SPARK ENGINE</text>
-  <text x="358" y="180" font-size="8" fill="#264060">[ NO BL CODE ]</text>
-  <text x="310" y="200" font-size="8" fill="#546e8a">1. Read PIPELINE_REGISTRY</text>
-  <text x="310" y="213" font-size="8" fill="#546e8a">2. Load all source DFs</text>
-  <text x="310" y="226" font-size="8" fill="#546e8a">3. Execute TRANSFORM_STEPS</text>
-  <text x="310" y="239" font-size="8" fill="#546e8a">4. Auto-inject AUDIT_COLS</text>
-  <text x="310" y="252" font-size="8" fill="#546e8a">5. Run DQ gates</text>
-  <text x="310" y="265" font-size="8" fill="#546e8a">6. Write + log lineage</text>
-  <text x="310" y="278" font-size="8" fill="#546e8a">7. Trigger email engine</text>
-  <text x="310" y="295" font-size="7.5" fill="#06b6d4">Generic. Oracle is program.</text>
-  <text x="310" y="308" font-size="7.5" fill="#475569">HDFS/Delta/GCS/S3</text>
-
-  <!-- CURATED -->
-
-  <rect x="478" y="165" width="130" height="155" rx="6" fill="#0c1422" stroke="#0052cc" stroke-width="1.5"/>
-  <rect x="478" y="165" width="130" height="20" rx="6" fill="#0052cc" fill-opacity="0.1"/>
-  <rect x="478" y="179" width="130" height="6" fill="#0052cc" fill-opacity="0.1"/>
-  <text x="488" y="180" font-size="9" fill="#60a5fa" font-weight="700">HDFS CURATED</text>
-  <text x="488" y="200" font-size="8" fill="#546e8a">DQ-validated only</text>
-  <text x="488" y="213" font-size="8" fill="#546e8a">BL applied (from cfg)</text>
-  <text x="488" y="226" font-size="8" fill="#546e8a">Enriched + typed</text>
-  <text x="488" y="239" font-size="8" fill="#546e8a">+26 AUDIT COLS</text>
-  <text x="488" y="252" font-size="8" fill="#546e8a">Hive managed table</text>
-  <text x="488" y="265" font-size="8" fill="#546e8a">Impala-queryable</text>
-  <text x="488" y="295" font-size="7.5" fill="#60a5fa">SCD2 / overwrite / append</text>
-  <text x="488" y="308" font-size="7.5" fill="#475569">from TARGET_CONFIG</text>
-
-  <!-- GOLD -->
-
-  <rect x="626" y="165" width="125" height="155" rx="6" fill="#0c1422" stroke="#ca8a04" stroke-width="1.5"/>
-  <rect x="626" y="165" width="125" height="20" rx="6" fill="#ca8a04" fill-opacity="0.1"/>
-  <rect x="626" y="179" width="125" height="6" fill="#ca8a04" fill-opacity="0.1"/>
-  <text x="636" y="180" font-size="9" fill="#fbbf24" font-weight="700">HDFS GOLD / MART</text>
-  <text x="636" y="200" font-size="8" fill="#546e8a">Aggregated marts</text>
-  <text x="636" y="213" font-size="8" fill="#546e8a">Denormalised</text>
-  <text x="636" y="226" font-size="8" fill="#546e8a">Impala views</text>
-  <text x="636" y="239" font-size="8" fill="#546e8a">+26 AUDIT COLS</text>
-  <text x="636" y="252" font-size="8" fill="#546e8a">SLA-timestamped</text>
-  <text x="636" y="265" font-size="8" fill="#546e8a">Auto Tableau trigger</text>
-  <text x="636" y="295" font-size="7.5" fill="#fbbf24">Certified datasource</text>
-
-  <!-- QUARANTINE -->
-
-  <rect x="770" y="165" width="115" height="75" rx="6" fill="#100810" stroke="#dc2626" stroke-width="1" stroke-dasharray="4,3"/>
-  <text x="780" y="183" font-size="9" fill="#ef4444" font-weight="700">QUARANTINE</text>
-  <text x="780" y="198" font-size="8" fill="#546e8a">DQ-failed rows</text>
-  <text x="780" y="210" font-size="8" fill="#546e8a">Isolated + flagged</text>
-  <text x="780" y="222" font-size="8" fill="#546e8a">Email alert fired</text>
-  <text x="780" y="234" font-size="7.5" fill="#ef4444">→ ERROR_LOG written</text>
-
-  <!-- TABLEAU -->
-
-  <rect x="896" y="165" width="140" height="155" rx="6" fill="#0c1422" stroke="#e8572a" stroke-width="1.5"/>
-  <rect x="896" y="165" width="140" height="20" rx="6" fill="#e8572a" fill-opacity="0.1"/>
-  <rect x="896" y="179" width="140" height="6" fill="#e8572a" fill-opacity="0.1"/>
-  <text x="906" y="180" font-size="9" fill="#e8572a" font-weight="700">TABLEAU SERVER</text>
-  <text x="906" y="200" font-size="8" fill="#546e8a">Certified datasources</text>
-  <text x="906" y="213" font-size="8" fill="#546e8a">Auto-published (TSC)</text>
-  <text x="906" y="226" font-size="8" fill="#546e8a">RLS from config</text>
-  <text x="906" y="239" font-size="8" fill="#546e8a">SLA-linked refresh</text>
-  <text x="906" y="252" font-size="8" fill="#546e8a">Impala ODBC/live</text>
-  <text x="906" y="265" font-size="8" fill="#546e8a">Pivot views via config</text>
-  <text x="906" y="295" font-size="7.5" fill="#e8572a">Never raw HDFS direct</text>
-
-  <!-- GOVERNANCE BAND -->
-
-  <rect x="10" y="352" width="500" height="150" rx="6" fill="#060c14" stroke="#1a1040" stroke-width="1"/>
-  <text x="28" y="370" font-size="9" fill="#7c3aed" letter-spacing="2">GOVERNANCE &amp; OBSERVABILITY</text>
-
-  <rect x="25"  y="378" width="95" height="110" rx="5" fill="#0c1422" stroke="#7c3aed" stroke-width="1"/>
-  <text x="35"  y="394" font-size="8" fill="#8b5cf6" font-weight="600">LINEAGE</text>
-  <text x="35"  y="408" font-size="7.5" fill="#546e8a">Auto-written</text>
-  <text x="35"  y="420" font-size="7.5" fill="#546e8a">Column-level</text>
-  <text x="35"  y="432" font-size="7.5" fill="#546e8a">Oracle graph</text>
-  <text x="35"  y="444" font-size="7.5" fill="#546e8a">Zero manual</text>
-  <text x="35"  y="460" font-size="7" fill="#3f1515">──────────</text>
-  <text x="35"  y="472" font-size="7.5" fill="#7c3aed">Impact analysis</text>
-  <text x="35"  y="483" font-size="7.5" fill="#7c3aed">on any col change</text>
-
-  <rect x="128" y="378" width="95" height="110" rx="5" fill="#0c1422" stroke="#7c3aed" stroke-width="1"/>
-  <text x="138" y="394" font-size="8" fill="#8b5cf6" font-weight="600">CATALOG</text>
-  <text x="138" y="408" font-size="7.5" fill="#546e8a">Schema Registry</text>
-  <text x="138" y="420" font-size="7.5" fill="#546e8a">= Data Catalog</text>
-  <text x="138" y="432" font-size="7.5" fill="#546e8a">Versioned cols</text>
-  <text x="138" y="444" font-size="7.5" fill="#546e8a">PII flagging</text>
-  <text x="138" y="460" font-size="7" fill="#3f1515">──────────</text>
-  <text x="138" y="472" font-size="7.5" fill="#7c3aed">Backward-compat</text>
-  <text x="138" y="483" font-size="7.5" fill="#7c3aed">schema evolution</text>
-
-  <rect x="231" y="378" width="100" height="110" rx="5" fill="#0c1422" stroke="#7c3aed" stroke-width="1"/>
-  <text x="241" y="394" font-size="8" fill="#8b5cf6" font-weight="600">DQ SCORECARD</text>
-  <text x="241" y="408" font-size="7.5" fill="#546e8a">Pass/fail per run</text>
-  <text x="241" y="420" font-size="7.5" fill="#546e8a">Rule-level detail</text>
-  <text x="241" y="432" font-size="7.5" fill="#546e8a">Trend over time</text>
-  <text x="241" y="444" font-size="7.5" fill="#546e8a">Sample failures</text>
-  <text x="241" y="460" font-size="7" fill="#3f1515">──────────</text>
-  <text x="241" y="472" font-size="7.5" fill="#7c3aed">Tableau ops</text>
-  <text x="241" y="483" font-size="7.5" fill="#7c3aed">dashboard</text>
-
-  <rect x="340" y="378" width="155" height="110" rx="5" fill="#0c1422" stroke="#7c3aed" stroke-width="1"/>
-  <text x="350" y="394" font-size="8" fill="#8b5cf6" font-weight="600">ACCESS + AUDIT TRAIL</text>
-  <text x="350" y="408" font-size="7.5" fill="#546e8a">Oracle RBAC → Ranger</text>
-  <text x="350" y="420" font-size="7.5" fill="#546e8a">RLS in Tableau cfg</text>
-  <text x="350" y="432" font-size="7.5" fill="#546e8a">Immutable run log</text>
-  <text x="350" y="444" font-size="7.5" fill="#546e8a">SOX/regulatory ready</text>
-  <text x="350" y="460" font-size="7" fill="#3f1515">────────────────</text>
-  <text x="350" y="472" font-size="7.5" fill="#7c3aed">26 audit cols on every</text>
-  <text x="350" y="483" font-size="7.5" fill="#7c3aed">table, auto-populated</text>
-
-  <!-- EMAIL + SLA BAND -->
-
-  <rect x="520" y="352" width="530" height="150" rx="6" fill="#060c14" stroke="#162236" stroke-width="1"/>
-  <text x="538" y="370" font-size="9" fill="#10b981" letter-spacing="2">EMAIL ENGINE + SLA MONITORING + ERROR HANDLING</text>
-
-  <rect x="535" y="378" width="130" height="110" rx="5" fill="#0c1422" stroke="#10b981" stroke-width="1"/>
-  <text x="545" y="394" font-size="8" fill="#10b981" font-weight="600">EMAIL TRIGGERS</text>
-  <text x="545" y="408" font-size="7.5" fill="#546e8a">LOAD_SUCCESS</text>
-  <text x="545" y="420" font-size="7.5" fill="#546e8a">LOAD_FAILURE</text>
-  <text x="545" y="432" font-size="7.5" fill="#546e8a">DQ_FAILURE</text>
-  <text x="545" y="444" font-size="7.5" fill="#546e8a">SLA_BREACH</text>
-  <text x="545" y="456" font-size="7.5" fill="#546e8a">SCHEMA_DRIFT</text>
-  <text x="545" y="468" font-size="7.5" fill="#546e8a">PIPELINE_START</text>
-  <text x="545" y="480" font-size="7.5" fill="#10b981">+ custom biz pivots</text>
-
-  <rect x="674" y="378" width="110" height="110" rx="5" fill="#0c1422" stroke="#f59e0b" stroke-width="1"/>
-  <text x="684" y="394" font-size="8" fill="#f59e0b" font-weight="600">SLA MONITOR</text>
-  <text x="684" y="408" font-size="7.5" fill="#546e8a">Expected completion</text>
-  <text x="684" y="420" font-size="7.5" fill="#546e8a">At-risk detection</text>
-  <text x="684" y="432" font-size="7.5" fill="#546e8a">Breach escalation</text>
-  <text x="684" y="444" font-size="7.5" fill="#546e8a">Dependency cascade</text>
-  <text x="684" y="460" font-size="7" fill="#3f1515">──────────</text>
-  <text x="684" y="472" font-size="7.5" fill="#f59e0b">Predictive alerting</text>
-  <text x="684" y="483" font-size="7.5" fill="#f59e0b">before actual breach</text>
-
-  <rect x="793" y="378" width="125" height="110" rx="5" fill="#0c1422" stroke="#ef4444" stroke-width="1"/>
-  <text x="803" y="394" font-size="8" fill="#ef4444" font-weight="600">ERROR HANDLING</text>
-  <text x="803" y="408" font-size="7.5" fill="#546e8a">Categorised errors</text>
-  <text x="803" y="420" font-size="7.5" fill="#546e8a">Stack trace capture</text>
-  <text x="803" y="432" font-size="7.5" fill="#546e8a">Auto-retry config</text>
-  <text x="803" y="444" font-size="7.5" fill="#546e8a">Dead letter queue</text>
-  <text x="803" y="456" font-size="7.5" fill="#546e8a">Partial run recovery</text>
-  <text x="803" y="468" font-size="7.5" fill="#546e8a">Circuit breaker</text>
-  <text x="803" y="480" font-size="7.5" fill="#ef4444">→ ERROR_LOG Oracle</text>
-
-  <!-- CLOUD PORTABILITY ROW -->
-
-  <rect x="10" y="518" width="1040" height="52" rx="6" fill="#050d0a" stroke="#0d3320" stroke-width="1"/>
-  <text x="28" y="535" font-size="9" fill="#059669" letter-spacing="2">CLOUD PORTABILITY — CHANGE ENVIRONMENT_CONFIG ROW → ZERO CODE MIGRATION</text>
-  <rect x="28"  y="540" width="90" height="22" rx="4" fill="#0c2018" stroke="#059669" stroke-width="1.5"/>
-  <text x="38" y="555" font-size="8" fill="#10b981" font-weight="700">ON-PREM ✓</text>
-  <text x="118" y="555" font-size="8" fill="#264060">HDFS · Spark · Impala · Hive</text>
-
-  <rect x="290" y="540" width="90" height="22" rx="4" fill="#0c1422" stroke="#264060" stroke-width="1"/>
-  <text x="300" y="555" font-size="8" fill="#546e8a" font-weight="700">DATABRICKS</text>
-  <text x="380" y="555" font-size="8" fill="#264060">Delta Lake · Unity Catalog · DB SQL</text>
-
-  <rect x="560" y="540" width="60" height="22" rx="4" fill="#0c1422" stroke="#264060" stroke-width="1"/>
-  <text x="570" y="555" font-size="8" fill="#546e8a" font-weight="700">GCP</text>
-  <text x="620" y="555" font-size="8" fill="#264060">Dataproc · GCS · BigQuery · Composer</text>
-
-  <rect x="810" y="540" width="60" height="22" rx="4" fill="#0c1422" stroke="#264060" stroke-width="1"/>
-  <text x="820" y="555" font-size="8" fill="#546e8a" font-weight="700">AWS</text>
-  <text x="870" y="555" font-size="8" fill="#264060">EMR · S3 · Glue · Athena · MWAA</text>
-
-  <!-- ── ARROWS (data flow) ── -->
-
-  <line x1="147" y1="243" x2="159" y2="243" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#ah)"/>
-  <line x1="284" y1="243" x2="297" y2="243" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#ac)"/>
-  <line x1="462" y1="243" x2="475" y2="243" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#ac)"/>
-  <line x1="610" y1="243" x2="623" y2="243" stroke="#ca8a04" stroke-width="1.5" marker-end="url(#ah)"/>
-  <line x1="753" y1="243" x2="893" y2="243" stroke="#e8572a" stroke-width="1.5" marker-end="url(#ah)"/>
-
-  <!-- DQ reject → quarantine -->
-
-  <path d="M462 260 Q620 285 768 230" fill="none" stroke="#dc2626" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#ar)"/>
-
-  <!-- Oracle → Spark (config read) -->
-
-  <line x1="380" y1="123" x2="380" y2="162" stroke="#ef4444" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#ar)"/>
-  <text x="386" y="148" font-size="7.5" fill="#ef4444">reads all config</text>
-
-  <!-- Spark → Oracle (writes audit/lineage) -->
-
-  <path d="M370 165 Q370 135 690 123" fill="none" stroke="#264060" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#ah)"/>
-  <text x="490" y="140" font-size="7.5" fill="#264060">writes audit + lineage</text>
-
-  <!-- Spark → Email -->
-
-  <path d="M380 320 Q380 380 533 420" fill="none" stroke="#10b981" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#ag)"/>
-  <text x="385" y="385" font-size="7.5" fill="#10b981">triggers email</text>
-</svg>
-    </div>
-  </div>
+<div class="title" id="title">
+EDF v6 - Master Index
 </div>
 
-<!-- ══ VIEW: PIPELINE BUILDER ══ -->
-
-<div class="view" id="view-builder">
-  <div class="sec-head">
-    <div><div class="sec-sub">AUTO-GENERATION ENGINE</div><div class="sec-title">Pipeline Builder — SQL In → Oracle Config Out</div></div>
-  </div>
-
-  <div class="builder-wrap">
-    <div class="builder-left">
-      <div class="card" style="margin-bottom:16px;">
-        <div class="card-head">
-          <div class="card-head-icon" style="background:rgba(6,182,212,0.1);color:var(--cyan);">📝</div>
-          <div><div class="card-head-title">Step 1 — Pipeline Metadata</div><div class="card-head-sub">Register the pipeline in PIPELINE_REGISTRY</div></div>
-        </div>
-        <div class="card-body">
-          <div class="grid-2">
-            <div><div class="inp-label">PIPELINE NAME</div><input type="text" id="pip-name" placeholder="e.g. trade_enrichment_daily" value="trade_enrichment_daily"/></div>
-            <div><div class="inp-label">OWNER</div><input type="text" id="pip-owner" placeholder="e.g. nishant.k" value="nishant.k"/></div>
-            <div><div class="inp-label">SOURCE HDFS PATH</div><input type="text" id="pip-src" placeholder="hdfs://raw/trades/" value="hdfs://raw/trades/"/></div>
-            <div><div class="inp-label">TARGET HDFS PATH</div><input type="text" id="pip-tgt" placeholder="hdfs://curated/trades/" value="hdfs://curated/trades/"/></div>
-            <div><div class="inp-label">SCHEDULE (CRON)</div><input type="text" id="pip-cron" placeholder="0 6 * * *" value="0 6 * * *"/></div>
-            <div><div class="inp-label">SLA MINUTES</div><input type="text" id="pip-sla" placeholder="120" value="120"/></div>
-            <div>
-              <div class="inp-label">SOURCE FORMAT</div>
-              <select id="pip-fmt">
-                <option value="parquet">parquet</option>
-                <option value="orc">orc</option>
-                <option value="csv">csv</option>
-                <option value="json">json</option>
-                <option value="delta">delta</option>
-              </select>
-            </div>
-            <div>
-              <div class="inp-label">WRITE MODE</div>
-              <select id="pip-wm">
-                <option value="overwrite">overwrite</option>
-                <option value="append">append</option>
-                <option value="merge_scd2">merge_scd2</option>
-                <option value="upsert">upsert</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-```
-  <div class="card" style="margin-bottom:16px;">
-    <div class="card-head">
-      <div class="card-head-icon" style="background:rgba(6,182,212,0.1);color:var(--cyan);">⚙️</div>
-      <div><div class="card-head-title">Step 2 — Business Logic (SQL → Auto Config)</div><div class="card-head-sub">Enter SQL expression → framework detects type → generates TRANSFORM_STEPS row</div></div>
-    </div>
-    <div class="card-body">
-      <div class="input-row">
-        <div style="flex:1;">
-          <div class="inp-label">STEP TYPE</div>
-          <select id="step-type" style="width:140px;">
-            <option value="FILTER">FILTER</option>
-            <option value="DERIVE">DERIVE</option>
-            <option value="JOIN">JOIN</option>
-            <option value="AGGREGATE">AGGREGATE</option>
-            <option value="DECODE">DECODE / CASE</option>
-            <option value="CAST">CAST / RENAME</option>
-            <option value="DEDUP">DEDUP</option>
-            <option value="SCD2">SCD TYPE 2</option>
-            <option value="PIVOT">PIVOT</option>
-            <option value="UNPIVOT">UNPIVOT</option>
-            <option value="WINDOW">WINDOW FUNC</option>
-          </select>
-        </div>
-        <div style="flex:1;">
-          <div class="inp-label">OUTPUT ALIAS (col name)</div>
-          <input type="text" id="step-alias" placeholder="e.g. notional_usd"/>
-        </div>
-      </div>
-      <div style="margin-bottom:10px;">
-        <div class="inp-label">SQL EXPRESSION (your business logic)</div>
-        <textarea id="step-sql" rows="4" placeholder="e.g. notional * fx_rate&#10;or: CASE WHEN status='A' THEN 'Active' ELSE 'Inactive' END&#10;or: trade_status != 'CANCELLED'&#10;or: SUM(amount) GROUP BY desk, trade_date"></textarea>
-      </div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn btn-primary" onclick="addStep()">+ ADD STEP</button>
-        <button class="btn btn-secondary" onclick="autoDetect()">⚡ AUTO-DETECT TYPE</button>
-        <button class="btn btn-secondary" onclick="clearSteps()">✕ CLEAR ALL</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-bottom:16px;">
-    <div class="card-head">
-      <div class="card-head-icon" style="background:rgba(5,150,105,0.1);color:var(--green2);">✅</div>
-      <div><div class="card-head-title">Step 3 — DQ Rules</div><div class="card-head-sub">Data quality gates — rows → DQ_RULES table</div></div>
-    </div>
-    <div class="card-body">
-      <div class="input-row">
-        <div style="flex:1;"><div class="inp-label">COLUMN</div><input type="text" id="dq-col" placeholder="trade_id"/></div>
-        <div style="flex:1;">
-          <div class="inp-label">RULE TYPE</div>
-          <select id="dq-type">
-            <option>NOT_NULL</option><option>RANGE</option><option>REGEX</option>
-            <option>REFERENTIAL</option><option>UNIQUENESS</option>
-            <option>VOLUME_SPIKE</option><option>FRESHNESS</option><option>CUSTOM_SQL</option>
-          </select>
-        </div>
-        <div style="flex:1;">
-          <div class="inp-label">FAIL ACTION</div>
-          <select id="dq-action">
-            <option>ABORT</option><option>QUARANTINE</option><option>WARN</option><option>FLAG</option>
-          </select>
-        </div>
-        <div style="margin-top:19px;"><button class="btn btn-secondary" onclick="addDQ()">+ DQ</button></div>
-      </div>
-      <div id="dq-list"></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-head">
-      <div class="card-head-icon" style="background:rgba(217,119,6,0.1);color:var(--orange2);">📧</div>
-      <div><div class="card-head-title">Step 4 — Email Config</div><div class="card-head-sub">Which events fire which emails — EMAIL_CONFIG table</div></div>
-    </div>
-    <div class="card-body">
-      <div class="grid-2">
-        <div><div class="inp-label">RECIPIENTS (comma-sep)</div><input type="text" id="email-to" placeholder="nishant@citi.com, team@citi.com"/></div>
-        <div>
-          <div class="inp-label">EMAIL TRIGGERS</div>
-          <select id="email-evt">
-            <option>ALL</option><option>LOAD_SUCCESS</option><option>LOAD_FAILURE</option>
-            <option>DQ_FAILURE</option><option>SLA_BREACH</option><option>SCHEMA_DRIFT</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
 
-<!-- RIGHT: GENERATED SQL OUTPUT -->
-<div class="builder-right">
-  <div class="card" style="height:100%; display:flex; flex-direction:column;">
-    <div class="card-head">
-      <div class="card-head-icon" style="background:rgba(239,68,68,0.1);color:var(--red2);">🗄</div>
-      <div><div class="card-head-title">Generated Oracle SQL</div><div class="card-head-sub">Ready to execute → pipeline goes live</div></div>
-      <button class="btn btn-primary btn-sm" onclick="generateSQL()" style="margin-left:auto;">⚡ GENERATE</button>
-    </div>
+<div class="content" id="content">
 
-    <!-- Steps Preview -->
-    <div style="padding:14px 16px; border-bottom:1px solid var(--border); flex-shrink:0;">
-      <div class="inp-label" style="margin-bottom:8px;">TRANSFORM STEPS (ordered)</div>
-      <div id="steps-list" style="max-height:180px; overflow-y:auto;">
-        <div style="color:var(--text3); font-family:'IBM Plex Mono',monospace; font-size:11px; padding:8px; text-align:center;">No steps yet. Add steps on the left.</div>
-      </div>
-    </div>
-
-    <div style="flex:1; overflow:hidden; display:flex; flex-direction:column;">
-      <div class="code-wrap" style="flex:1; border:none; border-radius:0;">
-        <div class="code-header">
-          <div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>
-          &nbsp; auto_generated_pipeline.sql
-        </div>
-        <div style="flex:1; overflow-y:auto; max-height:400px;">
-          <pre id="gen-sql"><span class="cmt">-- Click ⚡ GENERATE to produce Oracle INSERT statements</span>
-```
-
-<span class="cmt">– All pipeline config auto-generated from your inputs.</span>
-<span class="cmt">– Copy/paste to Oracle SQL*Plus or any SQL client.</span></pre>
-</div>
-</div>
-</div>
-</div>
 </div>
 
-  </div>
 </div>
 
-<!-- ══ VIEW: MULTI-SOURCE ══ -->
-
-<div class="view" id="view-sources">
-  <div class="sec-head">
-    <div><div class="sec-sub">SOURCE CONNECTIVITY</div><div class="sec-title">Multi-Source Capabilities — All Config-Driven</div></div>
-  </div>
-
-  <div class="card" style="margin-bottom:20px;">
-    <div class="card-head">
-      <div class="card-head-icon" style="background:rgba(217,119,6,0.1);color:var(--orange2);">🔌</div>
-      <div><div class="card-head-title">SOURCE_CONFIG Table — Full Connector Matrix</div><div class="card-head-sub">Every source type resolves to the same Spark read interface. Zero code per new source.</div></div>
-    </div>
-    <div class="card-body" style="padding:0;">
-      <table class="tbl">
-        <thead><tr>
-          <th>SOURCE TYPE</th><th>CONNECTION METHOD</th><th>AUTH PATTERN</th><th>READ API</th><th>MULTI-SRC JOIN</th><th>CDC</th>
-        </tr></thead>
-        <tbody>
-          <tr><td><span class="tag tag-orange">HDFS FILE</span></td><td class="mono">hdfs://path/to/data</td><td class="dim">Kerberos / keytab</td><td class="mono cyan-t">spark.read.parquet()</td><td class="green-t">✓</td><td class="dim">—</td></tr>
-          <tr><td><span class="tag tag-blue">ORACLE RDBMS</span></td><td class="mono">JDBC url + schema.table</td><td class="dim">Oracle Wallet / SSL</td><td class="mono cyan-t">spark.read.jdbc()</td><td class="green-t">✓</td><td class="orange-t">LogMiner</td></tr>
-          <tr><td><span class="tag tag-cyan">REST API</span></td><td class="mono">base_url + endpoint</td><td class="dim">OAuth2 / API Key</td><td class="mono cyan-t">requests → DF</td><td class="green-t">✓</td><td class="dim">Polling</td></tr>
-          <tr><td><span class="tag tag-purple">KAFKA TOPIC</span></td><td class="mono">broker:port, topic</td><td class="dim">SASL/Kerberos</td><td class="mono cyan-t">spark.readStream()</td><td class="orange-t">Micro-batch</td><td class="green-t">Native</td></tr>
-          <tr><td><span class="tag tag-gold">SFTP</span></td><td class="mono">host + path pattern</td><td class="dim">SSH key / password</td><td class="mono cyan-t">sftp → HDFS → DF</td><td class="green-t">✓</td><td class="dim">File detect</td></tr>
-          <tr><td><span class="tag tag-green">S3 / GCS / ADLS</span></td><td class="mono">s3a:// gs:// abfs://</td><td class="dim">IAM / Service Acct</td><td class="mono cyan-t">spark.read.parquet()</td><td class="green-t">✓</td><td class="dim">—</td></tr>
-          <tr><td><span class="tag tag-red">FLAT FILE (CSV)</span></td><td class="mono">HDFS / local path</td><td class="dim">POSIX perms</td><td class="mono cyan-t">spark.read.csv()</td><td class="green-t">✓</td><td class="dim">—</td></tr>
-          <tr><td><span class="tag tag-cyan">HIVE TABLE</span></td><td class="mono">db.table_name</td><td class="dim">Hive Metastore</td><td class="mono cyan-t">spark.table()</td><td class="green-t">✓</td><td class="dim">—</td></tr>
-          <tr><td><span class="tag tag-blue">IMPALA VIEW</span></td><td class="mono">JDBC Impala driver</td><td class="dim">LDAP / Kerberos</td><td class="mono cyan-t">spark.read.jdbc()</td><td class="green-t">✓</td><td class="dim">—</td></tr>
-          <tr><td><span class="tag tag-purple">DELTA LAKE</span></td><td class="mono">dbfs:/ or s3:/ path</td><td class="dim">Unity Catalog / IAM</td><td class="mono cyan-t">spark.read.delta()</td><td class="green-t">✓</td><td class="green-t">Change Feed</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-head">
-        <div class="card-head-icon" style="background:rgba(6,182,212,0.1);color:var(--cyan);">🔗</div>
-        <div><div class="card-head-title">Multi-Source JOIN Config</div><div class="card-head-sub">Cross-source joins via JOIN_CONFIG — no code</div></div>
-      </div>
-      <div class="card-body">
-        <div class="code-wrap">
-          <div class="code-header"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>&nbsp; multi_source_join_config.sql</div>
-          <pre><span class="cmt">-- JOIN trades (HDFS) with counterparties (Oracle JDBC)</span>
-<span class="cmt">-- with FX rates (REST API cached to HDFS)</span>
-<span class="cmt">-- All declared in SOURCE_CONFIG + JOIN_CONFIG</span>
-
-<span class="kw">INSERT INTO</span> <span class="col">SOURCE_CONFIG</span> <span class="kw">VALUES</span>
-(<span class="num">101</span>, <span class="str">‘HDFS’</span>,  <span class="str">‘hdfs://raw/trades/’</span>,        <span class="str">‘parquet’</span>),
-(<span class="num">102</span>, <span class="str">‘JDBC’</span>,  <span class="str">‘jdbc:oracle:…:CPTY’</span>,       <span class="str">‘jdbc’</span>),
-(<span class="num">103</span>, <span class="str">‘HDFS’</span>,  <span class="str">‘hdfs://ref/fx_rates/’</span>,       <span class="str">‘parquet’</span>);
-
-<span class="kw">INSERT INTO</span> <span class="col">JOIN_CONFIG</span> <span class="kw">VALUES</span>
-(<span class="num">1</span>, <span class="num">302</span>, <span class="str">‘LEFT’</span>,  <span class="num">101</span>, <span class="num">102</span>, <span class="str">‘cpty_id’</span>, <span class="str">‘id’</span>,       <span class="str">’*’</span>,  <span class="str">‘BROADCAST’</span>),
-(<span class="num">2</span>, <span class="num">302</span>, <span class="str">‘INNER’</span>, <span class="num">101</span>, <span class="num">103</span>, <span class="str">‘ccy,date’</span>, <span class="str">‘ccy,date’</span>, <span class="str">‘rate’</span>, <span class="str">‘MERGE’</span>);
-
-<span class="cmt">– Runner auto-loads all 3 sources, applies both joins</span>
-<span class="cmt">– Result: enriched single DataFrame for transform steps</span></pre>
 </div>
-</div>
-</div>
-
-```
-<div class="card">
-  <div class="card-head">
-    <div class="card-head-icon" style="background:rgba(220,38,38,0.1);color:var(--red2);">🔒</div>
-    <div><div class="card-head-title">Source Auth & Security Config</div><div class="card-head-sub">All credentials via Vault / env variables — never hardcoded</div></div>
-  </div>
-  <div class="card-body">
-    <div class="code-wrap">
-      <div class="code-header"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>&nbsp; source_auth_pattern.py (framework internals only)</div>
-      <pre><span class="cmt"># Source loader — resolves auth from Vault at runtime</span>
-```
-
-<span class="kw">def</span> <span class="fn">load_source</span>(src_cfg):
-auth = <span class="fn">vault.get_secret</span>(src_cfg.auth_key)
-
-```
-<span class="kw">if</span> src_cfg.type == <span class="str">'HDFS'</span>:
-    <span class="kw">return</span> spark.<span class="fn">read</span>.<span class="fn">format</span>(src_cfg.format).<span class="fn">load</span>(src_cfg.path)
-
-<span class="kw">elif</span> src_cfg.type == <span class="str">'JDBC'</span>:
-    <span class="kw">return</span> spark.<span class="fn">read</span>.<span class="fn">jdbc</span>(
-        url=src_cfg.conn_str, table=src_cfg.table,
-        user=auth.user, password=auth.password,
-        properties={<span class="str">'partitionColumn'</span>: src_cfg.partition_col}
-    )
-
-<span class="kw">elif</span> src_cfg.type == <span class="str">'KAFKA'</span>:
-    <span class="kw">return</span> spark.<span class="fn">readStream</span>.<span class="fn">format</span>(<span class="str">'kafka'</span>)\
-        .<span class="fn">option</span>(<span class="str">'subscribe'</span>, src_cfg.topic).<span class="fn">load</span>()
-
-<span class="kw">elif</span> src_cfg.type == <span class="str">'SFTP'</span>:
-    <span class="fn">sftp_to_hdfs</span>(src_cfg, auth)
-    <span class="kw">return</span> spark.<span class="fn">read</span>.<span class="fn">csv</span>(src_cfg.staging_path)
-```
-
-<span class="cmt">    # All source types → unified DataFrame interface</span></pre>
-</div>
-</div>
-</div>
-
-  </div>
-</div>
-
-<!-- ══ VIEW: AUDIT COLUMNS ══ -->
-
-<div class="view" id="view-audit">
-  <div class="sec-head">
-    <div><div class="sec-sub">ENTERPRISE STANDARD</div><div class="sec-title">26 Audit Columns — Auto-Appended to Every Table, Every Time</div></div>
-  </div>
-  <div class="card" style="margin-bottom:16px; border-left:3px solid var(--cyan);">
-    <div class="card-body">
-      <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text2); line-height:1.8;">
-        <span style="color:var(--cyan2);">RULE:</span> The Spark runner calls <span style="color:var(--cyan2);">AuditInjector.append(df, pipeline_id, run_id)</span> before every write.
-        No pipeline can skip this — it's wired into the framework core, not optional per pipeline.
-        Every RAW, CURATED, and GOLD table gets all 26 columns automatically. The AUDIT_COLUMNS config table controls which are active.
-      </div>
-    </div>
-  </div>
-
-  <div style="margin-bottom:12px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text3); letter-spacing:1px;">GROUP 1 — SOURCE TRACKING</div>
-  <div class="audit-grid" style="margin-bottom:20px;">
-    <div class="audit-col"><div class="audit-col-name">SRC_SYSTEM_CD</div><div class="audit-col-type">VARCHAR2(50)</div><div class="audit-col-desc">Source system code. e.g. ORACLE_TRADE_DB, SFTP_RISK, KAFKA_POSITIONS</div></div>
-    <div class="audit-col"><div class="audit-col-name">SRC_SCHEMA_NM</div><div class="audit-col-type">VARCHAR2(100)</div><div class="audit-col-desc">Source schema/database name at time of extraction</div></div>
-    <div class="audit-col"><div class="audit-col-name">SRC_TABLE_NM</div><div class="audit-col-type">VARCHAR2(100)</div><div class="audit-col-desc">Source table or topic name at extraction</div></div>
-    <div class="audit-col"><div class="audit-col-name">SRC_FILE_NM</div><div class="audit-col-type">VARCHAR2(500)</div><div class="audit-col-desc">Full HDFS/S3/SFTP path of source file if applicable</div></div>
-    <div class="audit-col"><div class="audit-col-name">SRC_ROW_CHECKSUM</div><div class="audit-col-type">VARCHAR2(64)</div><div class="audit-col-desc">MD5/SHA256 of source row for dedup and change detection</div></div>
-    <div class="audit-col"><div class="audit-col-name">SRC_EXTRACT_DT</div><div class="audit-col-type">TIMESTAMP</div><div class="audit-col-desc">Timestamp when row was extracted from source system</div></div>
-  </div>
-
-  <div style="margin-bottom:12px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text3); letter-spacing:1px;">GROUP 2 — LOAD TRACKING</div>
-  <div class="audit-grid" style="margin-bottom:20px;">
-    <div class="audit-col" style="border-left-color:var(--orange2);"><div class="audit-col-name">LOAD_DT</div><div class="audit-col-type">DATE</div><div class="audit-col-desc">Business date for which this row was loaded (partition key)</div></div>
-    <div class="audit-col" style="border-left-color:var(--orange2);"><div class="audit-col-name">LOAD_TS</div><div class="audit-col-type">TIMESTAMP WITH TZ</div><div class="audit-col-desc">Exact wall-clock timestamp when row was written to HDFS</div></div>
-    <div class="audit-col" style="border-left-color:var(--orange2);"><div class="audit-col-name">LOAD_RUN_ID</div><div class="audit-col-type">VARCHAR2(36)</div><div class="audit-col-desc">UUID of the specific pipeline run that wrote this row. FK → AUDIT_LOG</div></div>
-    <div class="audit-col" style="border-left-color:var(--orange2);"><div class="audit-col-name">LOAD_PIPELINE_ID</div><div class="audit-col-type">NUMBER</div><div class="audit-col-desc">FK → PIPELINE_REGISTRY. Which pipeline wrote this row</div></div>
-    <div class="audit-col" style="border-left-color:var(--orange2);"><div class="audit-col-name">LOAD_BATCH_ID</div><div class="audit-col-type">VARCHAR2(100)</div><div class="audit-col-desc">Business batch identifier. e.g. EOD_20250413, INTRADAY_03</div></div>
-    <div class="audit-col" style="border-left-color:var(--orange2);"><div class="audit-col-name">LOAD_FREQUENCY</div><div class="audit-col-type">VARCHAR2(20)</div><div class="audit-col-desc">DAILY / INTRADAY / REALTIME / WEEKLY / AD_HOC</div></div>
-  </div>
-
-  <div style="margin-bottom:12px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text3); letter-spacing:1px;">GROUP 3 — PROCESSING TRACKING</div>
-  <div class="audit-grid" style="margin-bottom:20px;">
-    <div class="audit-col" style="border-left-color:var(--purple2);"><div class="audit-col-name">PROC_STATUS_CD</div><div class="audit-col-type">VARCHAR2(20)</div><div class="audit-col-desc">PASSED_DQ / QUARANTINED / FLAGGED / PARTIAL. DQ outcome for this row</div></div>
-    <div class="audit-col" style="border-left-color:var(--purple2);"><div class="audit-col-name">PROC_STEP_LAST</div><div class="audit-col-type">NUMBER</div><div class="audit-col-desc">Last TRANSFORM_STEPS.step_id that processed this row successfully</div></div>
-    <div class="audit-col" style="border-left-color:var(--purple2);"><div class="audit-col-name">PROC_ZONE</div><div class="audit-col-type">VARCHAR2(20)</div><div class="audit-col-desc">RAW / CURATED / GOLD / QUARANTINE — which zone this row lives in</div></div>
-    <div class="audit-col" style="border-left-color:var(--purple2);"><div class="audit-col-name">PROC_DQ_FLAGS</div><div class="audit-col-type">VARCHAR2(500)</div><div class="audit-col-desc">JSON: which DQ rules flagged this row. e.g. {"RANGE_NOTIONAL":"WARN"}</div></div>
-    <div class="audit-col" style="border-left-color:var(--purple2);"><div class="audit-col-name">PROC_TRANSFORM_VER</div><div class="audit-col-type">VARCHAR2(20)</div><div class="audit-col-desc">Version hash of TRANSFORM_STEPS config at time of processing</div></div>
-    <div class="audit-col" style="border-left-color:var(--purple2);"><div class="audit-col-name">PROC_REPROCESS_FLG</div><div class="audit-col-type">CHAR(1)</div><div class="audit-col-desc">Y/N — was this a reprocessed row? Links to original LOAD_RUN_ID</div></div>
-  </div>
-
-  <div style="margin-bottom:12px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--text3); letter-spacing:1px;">GROUP 4 — SYSTEM / TECHNICAL METADATA</div>
-  <div class="audit-grid" style="margin-bottom:20px;">
-    <div class="audit-col" style="border-left-color:var(--green2);"><div class="audit-col-name">SYS_CREATED_TS</div><div class="audit-col-type">TIMESTAMP</div><div class="audit-col-desc">Row creation timestamp. Never updated. Immutable from first write.</div></div>
-    <div class="audit-col" style="border-left-color:var(--green2);"><div class="audit-col-name">SYS_UPDATED_TS</div><div class="audit-col-type">TIMESTAMP</div><div class="audit-col-desc">Last upsert/SCD2 effective update timestamp</div></div>
-    <div class="audit-col" style="border-left-color:var(--green2);"><div class="audit-col-name">SYS_EFF_FROM_DT</div><div class="audit-col-type">DATE</div><div class="audit-col-desc">SCD2 effective-from date. For non-SCD tables = LOAD_DT</div></div>
-    <div class="audit-col" style="border-left-color:var(--green2);"><div class="audit-col-name">SYS_EFF_TO_DT</div><div class="audit-col-type">DATE</div><div class="audit-col-desc">SCD2 effective-to date. 9999-12-31 = current record</div></div>
-    <div class="audit-col" style="border-left-color:var(--green2);"><div class="audit-col-name">SYS_CURRENT_FLG</div><div class="audit-col-type">CHAR(1)</div><div class="audit-col-desc">Y = current version of this key. N = historical. Used in SCD2 queries</div></div>
-    <div class="audit-col" style="border-left-color:var(--green2);"><div class="audit-col-name">SYS_SPARK_APP_ID</div><div class="audit-col-type">VARCHAR2(100)</div><div class="audit-col-desc">Spark application ID of the run that wrote this row. Trace to YARN/Spark UI</div></div>
-    <div class="audit-col" style="border-left-color:var(--green2);"><div class="audit-col-name">SYS_ENV_NM</div><div class="audit-col-type">VARCHAR2(20)</div><div class="audit-col-desc">ONPREM / DATABRICKS / GCP / AWS — which environment produced this row</div></div>
-    <div class="audit-col" style="border-left-color:var(--gold2);"><div class="audit-col-name">SYS_SCHEMA_VER</div><div class="audit-col-type">VARCHAR2(20)</div><div class="audit-col-desc">Schema version from SCHEMA_REGISTRY at time of write. Enables schema diff</div></div>
-  </div>
-
-  <div class="code-wrap">
-    <div class="code-header"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>&nbsp; audit_injector.py — called by runner before every write</div>
-    <pre><span class="kw">class</span> <span class="col">AuditInjector</span>:
-    <span class="kw">def</span> <span class="fn">append</span>(self, df, pipeline_id, run_id, zone, proc_status=<span class="str">'PASSED_DQ'</span>):
-        <span class="kw">from</span> pyspark.sql <span class="kw">import</span> functions <span class="kw">as</span> F
-        audit_ver = self.<span class="fn">get_transform_version</span>(pipeline_id)
-        <span class="kw">return</span> df \
-          .<span class="fn">withColumn</span>(<span class="str">'SRC_SYSTEM_CD'</span>,       F.<span class="fn">lit</span>(self.cfg.src_system)) \
-          .<span class="fn">withColumn</span>(<span class="str">'SRC_FILE_NM'</span>,         F.<span class="fn">lit</span>(self.cfg.source_path)) \
-          .<span class="fn">withColumn</span>(<span class="str">'SRC_ROW_CHECKSUM'</span>,    F.<span class="fn">md5</span>(F.<span class="fn">concat_ws</span>(<span class="str">'|'</span>, *df.columns))) \
-          .<span class="fn">withColumn</span>(<span class="str">'SRC_EXTRACT_DT'</span>,     F.<span class="fn">lit</span>(self.extract_ts)) \
-          .<span class="fn">withColumn</span>(<span class="str">'LOAD_DT'</span>,            F.<span class="fn">current_date</span>()) \
-          .<span class="fn">withColumn</span>(<span class="str">'LOAD_TS'</span>,            F.<span class="fn">current_timestamp</span>()) \
-          .<span class="fn">withColumn</span>(<span class="str">'LOAD_RUN_ID'</span>,        F.<span class="fn">lit</span>(run_id)) \
-          .<span class="fn">withColumn</span>(<span class="str">'LOAD_PIPELINE_ID'</span>,   F.<span class="fn">lit</span>(pipeline_id)) \
-          .<span class="fn">withColumn</span>(<span class="str">'LOAD_BATCH_ID'</span>,      F.<span class="fn">lit</span>(self.cfg.batch_id)) \
-          .<span class="fn">withColumn</span>(<span class="str">'LOAD_FREQUENCY'</span>,     F.<span class="fn">lit</span>(self.cfg.frequency)) \
-          .<span class="fn">withColumn</span>(<span class="str">'PROC_STATUS_CD'</span>,     F.<span class="fn">lit</span>(proc_status)) \
-          .<span class="fn">withColumn</span>(<span class="str">'PROC_ZONE'</span>,          F.<span class="fn">lit</span>(zone)) \
-          .<span class="fn">withColumn</span>(<span class="str">'PROC_DQ_FLAGS'</span>,      F.<span class="fn">lit</span>(self.<span class="fn">get_dq_flags</span>(run_id))) \
-          .<span class="fn">withColumn</span>(<span class="str">'PROC_TRANSFORM_VER'</span>, F.<span class="fn">lit</span>(audit_ver)) \
-          .<span class="fn">withColumn</span>(<span class="str">'PROC_REPROCESS_FLG'</span>, F.<span class="fn">lit</span>(<span class="str">'N'</span>)) \
-          .<span class="fn">withColumn</span>(<span class="str">'SYS_CREATED_TS'</span>,     F.<span class="fn">current_timestamp</span>()) \
-          .<span class="fn">withColumn</span>(<span class="str">'SYS_EFF_FROM_DT'</span>,    F.<span class="fn">current_date</span>()) \
-          .<span class="fn">withColumn</span>(<span class="str">'SYS_EFF_TO_DT'</span>,      F.<span class="fn">lit</span>(<span class="str">'9999-12-31'</span>).<span class="fn">cast</span>(<span class="str">'date'</span>)) \
-          .<span class="fn">withColumn</span>(<span class="str">'SYS_CURRENT_FLG'</span>,    F.<span class="fn">lit</span>(<span class="str">'Y'</span>)) \
-          .<span class="fn">withColumn</span>(<span class="str">'SYS_SPARK_APP_ID'</span>,   F.<span class="fn">lit</span>(spark.<span class="fn">sparkContext</span>.applicationId)) \
-          .<span class="fn">withColumn</span>(<span class="str">'SYS_ENV_NM'</span>,         F.<span class="fn">lit</span>(self.<span class="fn">get_active_env</span>())) \
-          .<span class="fn">withColumn</span>(<span class="str">'SYS_SCHEMA_VER'</span>,     F.<span class="fn">lit</span>(self.<span class="fn">get_schema_version</span>(pipeline_id)))</pre>
-  </div>
-</div>
-
-<!-- ══ VIEW: ERROR LOGGING ══ -->
-
-<div class="view" id="view-errors">
-  <div class="sec-head">
-    <div><div class="sec-sub">ENTERPRISE ERROR HANDLING</div><div class="sec-title">Categorised Error Logging — Oracle ERROR_LOG Table</div></div>
-  </div>
-
-  <div class="grid-2" style="margin-bottom:20px;">
-    <div class="card">
-      <div class="card-head">
-        <div class="card-head-icon" style="background:rgba(220,38,38,0.1);color:var(--red2);">🚨</div>
-        <div><div class="card-head-title">Error Categories & Handling Matrix</div></div>
-      </div>
-      <div class="card-body" style="padding:0;">
-        <table class="tbl">
-          <thead><tr><th>ERROR TYPE</th><th>SEVERITY</th><th>ACTION</th><th>RETRY</th><th>EMAIL</th></tr></thead>
-          <tbody>
-            <tr><td class="mono red-t">SCHEMA_MISMATCH</td><td><span class="tag tag-red">P1</span></td><td class="dim">ABORT + QUARANTINE</td><td class="dim">N</td><td class="green-t">✓ IMMEDIATE</td></tr>
-            <tr><td class="mono red-t">SOURCE_UNAVAILABLE</td><td><span class="tag tag-red">P1</span></td><td class="dim">RETRY × 3, then ABORT</td><td class="orange-t">3×5min</td><td class="green-t">✓ IMMEDIATE</td></tr>
-            <tr><td class="mono orange-t">DQ_ABORT_THRESHOLD</td><td><span class="tag tag-orange">P2</span></td><td class="dim">STOP + QUARANTINE batch</td><td class="dim">N</td><td class="green-t">✓ WITHIN 5min</td></tr>
-            <tr><td class="mono orange-t">TRANSFORM_SQL_ERROR</td><td><span class="tag tag-orange">P2</span></td><td class="dim">ABORT + LOG stack trace</td><td class="dim">N</td><td class="green-t">✓ IMMEDIATE</td></tr>
-            <tr><td class="mono gold-t">PARTIAL_LOAD</td><td><span class="tag tag-gold">P3</span></td><td class="dim">CONTINUE, FLAG rows</td><td class="dim">N</td><td class="orange-t">✓ SUMMARY</td></tr>
-            <tr><td class="mono gold-t">VOLUME_ANOMALY</td><td><span class="tag tag-gold">P3</span></td><td class="dim">WARN + FLAG + continue</td><td class="dim">N</td><td class="orange-t">✓ SUMMARY</td></tr>
-            <tr><td class="mono cyan-t">SLA_AT_RISK</td><td><span class="tag tag-cyan">P4</span></td><td class="dim">ALERT only, continue</td><td class="dim">N</td><td class="green-t">✓ PREDICTIVE</td></tr>
-            <tr><td class="mono dim">SCHEMA_DRIFT_WARN</td><td><span class="tag tag-blue">P5</span></td><td class="dim">LOG + WARN, continue</td><td class="dim">N</td><td class="dim">✓ DAILY DIGEST</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-```
-<div class="card">
-  <div class="card-head">
-    <div class="card-head-icon" style="background:rgba(220,38,38,0.1);color:var(--red2);">📋</div>
-    <div><div class="card-head-title">ERROR_LOG Oracle Table DDL</div></div>
-  </div>
-  <div class="card-body" style="padding:0;">
-    <div class="code-wrap" style="border:none;border-radius:0;">
-      <div class="code-header"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>&nbsp; ERROR_LOG table definition</div>
-      <pre><span class="kw">CREATE TABLE</span> <span class="col">ERROR_LOG</span> (
-```
-
-error_id        <span class="fn">RAW</span>(<span class="num">16</span>) <span class="kw">DEFAULT</span> <span class="fn">SYS_GUID</span>() <span class="kw">NOT NULL</span>,
-run_id          <span class="fn">VARCHAR2</span>(<span class="num">36</span>)  <span class="kw">NOT NULL</span>,  <span class="cmt">– FK AUDIT_LOG</span>
-pipeline_id     <span class="fn">NUMBER</span>(<span class="num">10</span>)   <span class="kw">NOT NULL</span>,  <span class="cmt">– FK PIPELINE_REGISTRY</span>
-step_id         <span class="fn">NUMBER</span>(<span class="num">10</span>),              <span class="cmt">– FK TRANSFORM_STEPS (null if pre-step)</span>
-error_type      <span class="fn">VARCHAR2</span>(<span class="num">50</span>)  <span class="kw">NOT NULL</span>,  <span class="cmt">– SCHEMA_MISMATCH, DQ_ABORT, etc</span>
-error_code      <span class="fn">VARCHAR2</span>(<span class="num">20</span>),              <span class="cmt">– EDF-1001, EDF-2003, etc</span>
-severity        <span class="fn">VARCHAR2</span>(<span class="num">5</span>)   <span class="kw">NOT NULL</span>,  <span class="cmt">– P1 / P2 / P3 / P4 / P5</span>
-error_message   <span class="fn">VARCHAR2</span>(<span class="num">4000</span>),            <span class="cmt">– Human-readable message</span>
-stack_trace     <span class="fn">CLOB</span>,                      <span class="cmt">– Full Python stack trace</span>
-failed_rows_cnt <span class="fn">NUMBER</span>(<span class="num">15</span>),               <span class="cmt">– How many rows affected</span>
-sample_rows     <span class="fn">CLOB</span>,                      <span class="cmt">– JSON sample of bad rows</span>
-retry_count     <span class="fn">NUMBER</span>(<span class="num">2</span>) <span class="kw">DEFAULT</span> <span class="num">0</span>,      <span class="cmt">– How many retries attempted</span>
-resolved_flg    <span class="fn">CHAR</span>(<span class="num">1</span>) <span class="kw">DEFAULT</span> <span class="str">‘N’</span>,      <span class="cmt">– Y when ops team resolves</span>
-resolved_by     <span class="fn">VARCHAR2</span>(<span class="num">100</span>),             <span class="cmt">– User ID who resolved</span>
-resolved_ts     <span class="fn">TIMESTAMP</span>,                <span class="cmt">– When resolved</span>
-email_sent_flg  <span class="fn">CHAR</span>(<span class="num">1</span>) <span class="kw">DEFAULT</span> <span class="str">‘N’</span>,      <span class="cmt">– Email notification fired?</span>
-created_ts      <span class="fn">TIMESTAMP</span> <span class="kw">DEFAULT</span> <span class="fn">SYSTIMESTAMP</span>,
-<span class="kw">CONSTRAINT</span> pk_error_log <span class="kw">PRIMARY KEY</span> (error_id),
-<span class="kw">CONSTRAINT</span> fk_err_run  <span class="kw">FOREIGN KEY</span> (run_id) <span class="kw">REFERENCES</span> <span class="col">AUDIT_LOG</span>(run_id)
-);</pre>
-</div>
-</div>
-</div>
-
-  </div>
-
-  <!-- LIVE LOG SIMULATION -->
-
-  <div class="card">
-    <div class="card-head">
-      <div class="card-head-icon" style="background:rgba(220,38,38,0.1);color:var(--red2);">📡</div>
-      <div><div class="card-head-title">Live Error Log Feed (Simulated)</div><div class="card-head-sub">Real-time structured log from Spark runner — ERROR_LOG + console output</div></div>
-      <button class="btn btn-secondary btn-sm" onclick="replayLogs()">▶ REPLAY</button>
-    </div>
-    <div class="card-body" style="max-height:340px; overflow-y:auto;" id="log-feed">
-      <div class="log-entry ok"><span class="log-ts">2025-04-13 06:00:00.001</span><span class="log-lvl">START</span><span class="log-msg">[run:a3f2-91cc] Pipeline 301 trade_enrichment_daily — STARTED. Source: hdfs://raw/trades/dt=20250413/</span></div>
-      <div class="log-entry info"><span class="log-ts">2025-04-13 06:00:03.441</span><span class="log-lvl">INFO</span><span class="log-msg">[step:1001] FILTER applied: "trade_status != 'CANCELLED'". Rows in: 284,912. Rows out: 279,088. Dropped: 5,824.</span></div>
-      <div class="log-entry info"><span class="log-ts">2025-04-13 06:00:09.882</span><span class="log-lvl">INFO</span><span class="log-msg">[step:1002] DERIVE applied: notional * fx_rate → notional_usd. Nulls encountered: 0. Range OK.</span></div>
-      <div class="log-entry info"><span class="log-ts">2025-04-13 06:00:14.213</span><span class="log-lvl">INFO</span><span class="log-msg">[step:1003] JOIN applied: LEFT join with hdfs://ref/counterparty/ on cpty_id. Unmatched rows: 12 (WARN threshold: 100). OK.</span></div>
-      <div class="log-entry warn"><span class="log-ts">2025-04-13 06:00:21.554</span><span class="log-lvl">WARN</span><span class="log-msg">[dq:502] RANGE CHECK on notional_usd: 3 rows exceed max=1e12. Action=QUARANTINE. Rows quarantined to hdfs://quarantine/trades/run=a3f2-91cc/</span></div>
-      <div class="log-entry warn"><span class="log-ts">2025-04-13 06:00:21.555</span><span class="log-lvl">WARN</span><span class="log-msg">[email] EMAIL_CONFIG event=DQ_FAILURE: sending to nishant@citi.com. Template: DQ_QUARANTINE_SUMMARY. Attaching sample rows JSON.</span></div>
-      <div class="log-entry info"><span class="log-ts">2025-04-13 06:00:28.901</span><span class="log-lvl">INFO</span><span class="log-msg">[step:1004] DECODE applied: trade_tier CASE expression. Distinct values: LARGE=8,842, STANDARD=270,243.</span></div>
-      <div class="log-entry info"><span class="log-ts">2025-04-13 06:00:34.119</span><span class="log-lvl">INFO</span><span class="log-msg">[step:1005] AGGREGATE applied: SUM(notional_usd) GROUP BY desk, trade_date. Output rows: 342.</span></div>
-      <div class="log-entry info"><span class="log-ts">2025-04-13 06:00:35.002</span><span class="log-lvl">AUDIT</span><span class="log-msg">[audit] AuditInjector.append() called. Zone=CURATED. 26 audit columns appended. PROC_STATUS_CD=PASSED_DQ. SYS_SCHEMA_VER=v2.4.</span></div>
-      <div class="log-entry info"><span class="log-ts">2025-04-13 06:00:42.330</span><span class="log-lvl">WRITE</span><span class="log-msg">[write] Writing 279,085 rows to hdfs://curated/trades/dt=20250413/ mode=overwrite. Format=parquet. Partitions written: 24.</span></div>
-      <div class="log-entry info"><span class="log-ts">2025-04-13 06:00:47.881</span><span class="log-lvl">AUDIT</span><span class="log-msg">[lineage] LINEAGE_MAP written: 301 column-level edges recorded for run a3f2-91cc. Oracle LINEAGE_MAP updated.</span></div>
-      <div class="log-entry ok"><span class="log-ts">2025-04-13 06:00:48.002</span><span class="log-lvl">OK</span><span class="log-msg">[run:a3f2-91cc] Pipeline 301 COMPLETED. Duration: 48.0s. SLA: 120min. Rows passed DQ: 279,085. Quarantined: 3. Email: LOAD_SUCCESS sent.</span></div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ VIEW: EMAIL ENGINE ══ -->
-
-<div class="view" id="view-email">
-  <div class="sec-head">
-    <div><div class="sec-sub">ENTERPRISE EMAIL ENGINE</div><div class="sec-title">Config-Driven Email — Every Event, Every Scenario</div></div>
-  </div>
-
-  <div class="grid-2" style="margin-bottom:20px;">
-    <div class="card">
-      <div class="card-head">
-        <div class="card-head-icon" style="background:rgba(16,185,129,0.1);color:var(--green2);">📧</div>
-        <div><div class="card-head-title">EMAIL_CONFIG Table</div><div class="card-head-sub">Every notification fully configurable</div></div>
-      </div>
-      <div class="card-body" style="padding:0;">
-        <table class="tbl">
-          <thead><tr><th>EVENT TYPE</th><th>TEMPLATE</th><th>RECIPIENTS FROM</th><th>PIVOT COLS</th><th>TIMING</th></tr></thead>
-          <tbody>
-            <tr><td><span class="tag tag-green">LOAD_SUCCESS</span></td><td class="mono dim">SUCCESS_SUMMARY</td><td class="dim">EMAIL_CONFIG.recipients</td><td class="dim">row counts, duration</td><td class="dim">On completion</td></tr>
-            <tr><td><span class="tag tag-red">LOAD_FAILURE</span></td><td class="mono dim">FAILURE_DETAIL</td><td class="dim">+ escalation list</td><td class="dim">error type, step, stack</td><td class="dim">Immediate P1</td></tr>
-            <tr><td><span class="tag tag-orange">DQ_FAILURE</span></td><td class="mono dim">DQ_QUARANTINE</td><td class="dim">pipeline owner</td><td class="dim">rule, fail_count, samples</td><td class="dim">Immediate</td></tr>
-            <tr><td><span class="tag tag-orange">SLA_BREACH</span></td><td class="mono dim">SLA_ESCALATION</td><td class="dim">owner + mgmt</td><td class="dim">expected vs actual time</td><td class="dim">At breach</td></tr>
-            <tr><td><span class="tag tag-cyan">SLA_AT_RISK</span></td><td class="mono dim">SLA_WARNING</td><td class="dim">pipeline owner</td><td class="dim">predicted completion time</td><td class="dim">Predictive</td></tr>
-            <tr><td><span class="tag tag-purple">SCHEMA_DRIFT</span></td><td class="mono dim">SCHEMA_DRIFT_ALERT</td><td class="dim">owner + architects</td><td class="dim">old vs new schema diff</td><td class="dim">Pre-load</td></tr>
-            <tr><td><span class="tag tag-blue">BIZ_PIVOT_REPORT</span></td><td class="mono dim">CUSTOM_PIVOT</td><td class="dim">EMAIL_CONFIG.recipients</td><td class="dim">configurable pivot cols</td><td class="dim">Post-load</td></tr>
-            <tr><td><span class="tag tag-gold">DAILY_OPS_DIGEST</span></td><td class="mono dim">OPS_SUMMARY</td><td class="dim">ops team</td><td class="dim">all pipelines summary</td><td class="dim">08:00 daily</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-```
-<div class="card">
-  <div class="card-head">
-    <div class="card-head-icon" style="background:rgba(16,185,129,0.1);color:var(--green2);">🔧</div>
-    <div><div class="card-head-title">EMAIL_CONFIG Oracle DDL</div></div>
-  </div>
-  <div class="card-body" style="padding:0;">
-    <div class="code-wrap" style="border:none;border-radius:0;">
-      <div class="code-header"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>&nbsp; EMAIL_CONFIG table + BIZ_PIVOT config</div>
-      <pre><span class="kw">CREATE TABLE</span> <span class="col">EMAIL_CONFIG</span> (
-```
-
-email_cfg_id    <span class="fn">NUMBER</span>      <span class="kw">PRIMARY KEY</span>,
-pipeline_id     <span class="fn">NUMBER</span>      <span class="kw">NOT NULL</span>,
-event_type      <span class="fn">VARCHAR2</span>(<span class="num">50</span>) <span class="kw">NOT NULL</span>,  <span class="cmt">– LOAD_SUCCESS / FAILURE etc</span>
-template_id     <span class="fn">VARCHAR2</span>(<span class="num">50</span>) <span class="kw">NOT NULL</span>,
-recipients      <span class="fn">VARCHAR2</span>(<span class="num">2000</span>),          <span class="cmt">– CSV of email addresses</span>
-cc_list         <span class="fn">VARCHAR2</span>(<span class="num">2000</span>),
-subject_tmpl    <span class="fn">VARCHAR2</span>(<span class="num">500</span>),           <span class="cmt">– Jinja2 template string</span>
-include_stats   <span class="fn">CHAR</span>(<span class="num">1</span>) <span class="kw">DEFAULT</span> <span class="str">‘Y’</span>,    <span class="cmt">– Row counts, duration etc</span>
-include_samples <span class="fn">CHAR</span>(<span class="num">1</span>) <span class="kw">DEFAULT</span> <span class="str">‘N’</span>,    <span class="cmt">– Failed row samples</span>
-active_flg      <span class="fn">CHAR</span>(<span class="num">1</span>) <span class="kw">DEFAULT</span> <span class="str">‘Y’</span>
-);
-
-<span class="kw">CREATE TABLE</span> <span class="col">EMAIL_PIVOT_CONFIG</span> (
-pivot_cfg_id    <span class="fn">NUMBER</span>      <span class="kw">PRIMARY KEY</span>,
-email_cfg_id    <span class="fn">NUMBER</span>      <span class="kw">NOT NULL</span>,   <span class="cmt">– FK EMAIL_CONFIG</span>
-source_table    <span class="fn">VARCHAR2</span>(<span class="num">200</span>),          <span class="cmt">– Hive/Impala table to pivot</span>
-pivot_col       <span class="fn">VARCHAR2</span>(<span class="num">100</span>),          <span class="cmt">– Column to pivot on</span>
-value_col       <span class="fn">VARCHAR2</span>(<span class="num">100</span>),          <span class="cmt">– Measure column</span>
-agg_func        <span class="fn">VARCHAR2</span>(<span class="num">20</span>),           <span class="cmt">– SUM / COUNT / AVG</span>
-filter_sql      <span class="fn">VARCHAR2</span>(<span class="num">2000</span>),         <span class="cmt">– WHERE clause</span>
-format_template <span class="fn">VARCHAR2</span>(<span class="num">4000</span>)         <span class="cmt">– HTML table template (Jinja2)</span>
-);</pre>
-</div>
-</div>
-</div>
-
-  </div>
-
-  <!-- LOAD SUCCESS EMAIL PREVIEW -->
-
-  <div class="card">
-    <div class="card-head">
-      <div class="card-head-icon" style="background:rgba(16,185,129,0.1);color:var(--green2);">📬</div>
-      <div><div class="card-head-title">Email Preview — LOAD_SUCCESS with Pivot Business Report</div><div class="card-head-sub">Auto-generated from template + config. No manual email writing.</div></div>
-      <div class="card-head-badge" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--green2);">PREVIEW</div>
-    </div>
-    <div class="card-body" style="background:#e8eef4; padding:20px;">
-      <div class="email-preview">
-        <div class="email-header-bar" style="background:#003874; color:#fff;">
-          <div style="font-size:14px; font-weight:700;">🏦 EDF · Enterprise Data Framework</div>
-          <div style="margin-left:auto; font-size:11px; opacity:0.7;">noreply-edf@citi.com</div>
-        </div>
-        <div class="email-body-wrap">
-          <div style="font-size:11px; color:#64748b; margin-bottom:8px;">To: nishant@citi.com, team@citi.com &nbsp;|&nbsp; 2025-04-13 06:00:48 &nbsp;|&nbsp; Pipeline: trade_enrichment_daily</div>
-          <div style="font-size:16px; font-weight:700; color:#003874; margin-bottom:4px;">✅ Load Successful — trade_enrichment_daily</div>
-          <div style="font-size:12px; color:#475569;">Business Date: 2025-04-13 &nbsp;|&nbsp; Run ID: a3f2-91cc &nbsp;|&nbsp; Duration: 48s &nbsp;|&nbsp; SLA: 120min ✓</div>
-
-```
-      <div class="email-stat-row">
-        <div class="email-stat" style="background:#ecfdf5; border:1px solid #bbf7d0;">
-          <div style="font-size:20px; font-weight:700; color:#059669;">279,085</div>
-          <div style="font-size:10px; color:#6b7280;">ROWS LOADED</div>
-        </div>
-        <div class="email-stat" style="background:#fffbeb; border:1px solid #fde68a;">
-          <div style="font-size:20px; font-weight:700; color:#d97706;">3</div>
-          <div style="font-size:10px; color:#6b7280;">QUARANTINED</div>
-        </div>
-        <div class="email-stat" style="background:#eff6ff; border:1px solid #bfdbfe;">
-          <div style="font-size:20px; font-weight:700; color:#1d4ed8;">99.99%</div>
-          <div style="font-size:10px; color:#6b7280;">DQ PASS RATE</div>
-        </div>
-        <div class="email-stat" style="background:#f0fdf4; border:1px solid #bbf7d0;">
-          <div style="font-size:20px; font-weight:700; color:#15803d;">48s</div>
-          <div style="font-size:10px; color:#6b7280;">DURATION</div>
-        </div>
-      </div>
-
-      <div style="font-size:12px; font-weight:600; color:#1e293b; margin:12px 0 6px;">📊 Business Pivot — Notional by Desk (Today)</div>
-      <table class="email-table">
-        <thead><tr><th>DESK</th><th>TRADE COUNT</th><th>TOTAL NOTIONAL (USD)</th><th>LARGE TRADES</th><th>vs YESTERDAY</th></tr></thead>
-        <tbody>
-          <tr><td>Fixed Income</td><td>89,234</td><td>$4.2B</td><td>342</td><td style="color:#059669;">▲ +2.1%</td></tr>
-          <tr><td>Equity Derivatives</td><td>54,112</td><td>$1.8B</td><td>128</td><td style="color:#dc2626;">▼ -0.8%</td></tr>
-          <tr><td>FX Spot</td><td>67,903</td><td>$3.1B</td><td>211</td><td style="color:#059669;">▲ +5.4%</td></tr>
-          <tr><td>Commodities</td><td>23,456</td><td>$0.9B</td><td>87</td><td style="color:#475569;">= 0.0%</td></tr>
-          <tr style="font-weight:600; background:#f8fafc;"><td>TOTAL</td><td>234,705</td><td>$10.0B</td><td>768</td><td style="color:#059669;">▲ +1.9%</td></tr>
-        </tbody>
-      </table>
-
-      <div style="font-size:11px; color:#94a3b8; margin-top:16px; border-top:1px solid #f1f5f9; padding-top:10px;">
-        Spark App: application_1713000000000_0142 &nbsp;|&nbsp; Environment: ON-PREM &nbsp;|&nbsp; Schema Version: v2.4
-        &nbsp;|&nbsp; <a href="#" style="color:#003874;">View Tableau Dashboard</a> &nbsp;|&nbsp; <a href="#" style="color:#003874;">View Audit Log</a>
-      </div>
-    </div>
-  </div>
-</div>
-```
-
-  </div>
-</div>
-
-<!-- ══ VIEW: SLA ══ -->
-
-<div class="view" id="view-sla">
-  <div class="sec-head">
-    <div><div class="sec-sub">SLA MONITORING ENGINE</div><div class="sec-title">Predictive SLA Tracking — Alert Before Breach, Not After</div></div>
-  </div>
-
-  <div class="grid-3" style="margin-bottom:20px;">
-    <div class="stat-card" style="border-left:3px solid var(--green2);">
-      <div class="stat-num" style="color:var(--green2);">14</div>
-      <div class="stat-label">Pipelines On Track</div>
-      <div class="stat-delta" style="color:var(--green2);">All within SLA window</div>
-    </div>
-    <div class="stat-card" style="border-left:3px solid var(--orange2);">
-      <div class="stat-num" style="color:var(--orange2);">2</div>
-      <div class="stat-label">Pipelines At Risk</div>
-      <div class="stat-delta" style="color:var(--orange2);">⚠ Predictive alert sent</div>
-    </div>
-    <div class="stat-card" style="border-left:3px solid var(--red2);">
-      <div class="stat-num" style="color:var(--red2);">0</div>
-      <div class="stat-label">SLA Breached</div>
-      <div class="stat-delta" style="color:var(--green2);">Clean today</div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-bottom:16px;">
-    <div class="card-head">
-      <div class="card-head-icon" style="background:rgba(217,119,6,0.1);color:var(--orange2);">⏱</div>
-      <div><div class="card-head-title">SLA_CONFIG + PIPELINE_SLA_STATUS</div><div class="card-head-sub">All SLA windows, AT_RISK thresholds, and cascade dependencies</div></div>
-    </div>
-    <div class="card-body" style="padding:0;">
-      <table class="tbl">
-        <thead><tr><th>PIPELINE</th><th>SLA (MINS)</th><th>AT_RISK %</th><th>STARTED</th><th>ELAPSED</th><th>ETA</th><th>STATUS</th><th>EMAIL SENT</th></tr></thead>
-        <tbody>
-          <tr>
-            <td class="mono cyan-t">trade_enrichment_daily</td>
-            <td class="mono">120</td><td class="mono">70%</td>
-            <td class="mono dim">06:00:00</td><td class="mono dim">0:48s</td><td class="mono green-t">06:01 est</td>
-            <td><span class="tag tag-green">COMPLETE</span></td>
-            <td class="green-t">SUCCESS ✓</td>
-          </tr>
-          <tr>
-            <td class="mono cyan-t">risk_aggregation_daily</td>
-            <td class="mono">90</td><td class="mono">70%</td>
-            <td class="mono dim">06:30:00</td><td class="mono dim">58:22m</td><td class="mono orange-t">07:45 est</td>
-            <td><span class="tag tag-orange">AT RISK</span></td>
-            <td class="orange-t">AT_RISK ⚠ sent</td>
-          </tr>
-          <tr>
-            <td class="mono cyan-t">pnl_gold_rollup</td>
-            <td class="mono">60</td><td class="mono">75%</td>
-            <td class="mono dim">07:00:00</td><td class="mono dim">Not started</td><td class="mono dim">Waiting upstream</td>
-            <td><span class="tag tag-blue">PENDING</span></td>
-            <td class="dim">—</td>
-          </tr>
-          <tr>
-            <td class="mono cyan-t">counterparty_ref_load</td>
-            <td class="mono">30</td><td class="mono">70%</td>
-            <td class="mono dim">05:45:00</td><td class="mono dim">12:03m</td><td class="mono green-t">05:58 est</td>
-            <td><span class="tag tag-green">COMPLETE</span></td>
-            <td class="green-t">SUCCESS ✓</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="code-wrap">
-    <div class="code-header"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>&nbsp; sla_monitor.py — runs every 60s as daemon thread alongside Spark runner</div>
-    <pre><span class="kw">class</span> <span class="col">SLAMonitor</span>:
-    <span class="kw">def</span> <span class="fn">check_all_active_pipelines</span>(self):
-        <span class="kw">for</span> run <span class="kw">in</span> self.oracle.<span class="fn">get_running_pipelines</span>():
-            sla_mins     = run.sla_minutes
-            elapsed_mins = (datetime.<span class="fn">now</span>() - run.start_ts).<span class="fn">total_seconds</span>() / <span class="num">60</span>
-            at_risk_pct  = self.oracle.<span class="fn">get_at_risk_pct</span>(run.pipeline_id)  <span class="cmt"># from SLA_CONFIG</span>
-            predicted_completion = self.<span class="fn">predict_completion</span>(run)  <span class="cmt"># based on row velocity</span>
-
-```
-        <span class="kw">if</span> elapsed_mins >= sla_mins:
-            self.<span class="fn">fire_breach</span>(run, elapsed_mins, predicted_completion)
-
-        <span class="kw">elif</span> elapsed_mins / sla_mins >= (at_risk_pct / <span class="num">100</span>):
-            <span class="kw">if not</span> self.<span class="fn">already_alerted</span>(run.run_id, <span class="str">'AT_RISK'</span>):
-                self.<span class="fn">fire_at_risk</span>(run, elapsed_mins, predicted_completion)
-
-<span class="kw">def</span> <span class="fn">predict_completion</span>(self, run):
-    <span class="cmt"># Uses rolling avg of last 7 runs for same pipeline</span>
-    hist_avg = self.oracle.<span class="fn">get_avg_duration</span>(run.pipeline_id, lookback=<span class="num">7</span>)
-    rows_done = self.oracle.<span class="fn">get_rows_processed</span>(run.run_id)
-    rows_total = self.oracle.<span class="fn">get_last_total_rows</span>(run.pipeline_id)
-    pct_done = rows_done / max(rows_total, <span class="num">1</span>)
-    <span class="kw">return</span> run.start_ts + timedelta(seconds=hist_avg / max(pct_done, <span class="num">0.01</span>))</pre>
-```
-
-  </div>
-</div>
-
-<!-- ══ VIEW: DQ ENGINE ══ -->
-
-<div class="view" id="view-dq">
-  <div class="sec-head">
-    <div><div class="sec-sub">DATA QUALITY ENGINE</div><div class="sec-title">10 Rule Types — Wired Into Every Pipeline Run</div></div>
-  </div>
-
-  <div class="card" style="margin-bottom:16px;">
-    <div class="card-head"><div class="card-head-icon" style="background:rgba(5,150,105,0.1);color:var(--green2);">✅</div><div><div class="card-head-title">DQ Rule Catalogue</div><div class="card-head-sub">All rules declared in DQ_RULES — no code, just rows</div></div></div>
-    <div class="card-body" style="padding:0;">
-      <table class="tbl">
-        <thead><tr><th>RULE TYPE</th><th>CONFIG FIELDS</th><th>FAIL ACTIONS</th><th>SEVERITY</th><th>EMAIL?</th></tr></thead>
-        <tbody>
-          <tr><td><span class="tag tag-red">NOT_NULL</span></td><td class="mono dim">column_name</td><td class="dim">ABORT / QUARANTINE / FLAG</td><td class="red-t">P1–P2</td><td class="green-t">✓</td></tr>
-          <tr><td><span class="tag tag-orange">RANGE</span></td><td class="mono dim">min_val, max_val, column_name</td><td class="dim">QUARANTINE / WARN / FLAG</td><td class="orange-t">P2–P3</td><td class="green-t">✓</td></tr>
-          <tr><td><span class="tag tag-cyan">REGEX</span></td><td class="mono dim">pattern, column_name</td><td class="dim">QUARANTINE / FLAG</td><td class="orange-t">P3</td><td class="green-t">✓</td></tr>
-          <tr><td><span class="tag tag-purple">REFERENTIAL</span></td><td class="mono dim">lookup_table, lookup_col, column_name</td><td class="dim">QUARANTINE / WARN</td><td class="orange-t">P2</td><td class="green-t">✓</td></tr>
-          <tr><td><span class="tag tag-blue">UNIQUENESS</span></td><td class="mono dim">column_list (composite key)</td><td class="dim">ABORT / DEDUPLICATE</td><td class="red-t">P1</td><td class="green-t">✓</td></tr>
-          <tr><td><span class="tag tag-gold">VOLUME_SPIKE</span></td><td class="mono dim">pct_change_threshold, lookback_days</td><td class="dim">ALERT / ABORT</td><td class="orange-t">P2–P3</td><td class="green-t">✓</td></tr>
-          <tr><td><span class="tag tag-orange">FRESHNESS</span></td><td class="mono dim">max_age_hours, timestamp_col</td><td class="dim">ABORT / ALERT</td><td class="red-t">P1–P2</td><td class="green-t">✓</td></tr>
-          <tr><td><span class="tag tag-cyan">CUSTOM_SQL</span></td><td class="mono dim">sql_expression (full WHERE clause)</td><td class="dim">All actions</td><td class="dim">Configurable</td><td class="green-t">✓</td></tr>
-          <tr><td><span class="tag tag-green">CROSS_TABLE</span></td><td class="mono dim">ref_pipeline_id, ref_col, tolerance_pct</td><td class="dim">ALERT / ABORT</td><td class="orange-t">P2</td><td class="green-t">✓</td></tr>
-          <tr><td><span class="tag tag-purple">SCHEMA_MATCH</span></td><td class="mono dim">expected_schema_version</td><td class="dim">ABORT (always)</td><td class="red-t">P1</td><td class="green-t">✓</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="code-wrap">
-    <div class="code-header"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>&nbsp; dq_engine.py — universal rule executor, no per-rule code</div>
-    <pre><span class="kw">class</span> <span class="col">DQEngine</span>:
-    <span class="kw">def</span> <span class="fn">validate</span>(self, df, rules) -> (passed_df, quarantine_df):
-        quarantine_rows = spark.<span class="fn">createDataFrame</span>([], df.schema)
-        warn_flags      = {}
-
-```
-    <span class="kw">for</span> rule <span class="kw">in</span> rules:
-        <span class="kw">if</span>   rule.type == <span class="str">'NOT_NULL'</span>:
-            failed = df.<span class="fn">filter</span>(F.<span class="fn">col</span>(rule.column).<span class="fn">isNull</span>())
-        <span class="kw">elif</span> rule.type == <span class="str">'RANGE'</span>:
-            failed = df.<span class="fn">filter</span>(~F.<span class="fn">col</span>(rule.column).<span class="fn">between</span>(rule.min_val, rule.max_val))
-        <span class="kw">elif</span> rule.type == <span class="str">'REGEX'</span>:
-            failed = df.<span class="fn">filter</span>(~F.<span class="fn">col</span>(rule.column).<span class="fn">rlike</span>(rule.pattern))
-        <span class="kw">elif</span> rule.type == <span class="str">'REFERENTIAL'</span>:
-            ref_df = spark.<span class="fn">table</span>(rule.lookup_table).<span class="fn">select</span>(rule.lookup_col)
-            failed = df.<span class="fn">join</span>(ref_df, df[rule.column] == ref_df[rule.lookup_col], <span class="str">'left_anti'</span>)
-        <span class="kw">elif</span> rule.type == <span class="str">'UNIQUENESS'</span>:
-            failed = df.<span class="fn">groupBy</span>(rule.column_list).<span class="fn">count</span>().<span class="fn">filter</span>(F.<span class="fn">col</span>(<span class="str">'count'</span>) > <span class="num">1</span>)
-        <span class="kw">elif</span> rule.type == <span class="str">'VOLUME_SPIKE'</span>:
-            last_cnt = self.oracle.<span class="fn">get_last_row_count</span>(rule.pipeline_id, rule.lookback_days)
-            curr_cnt = df.<span class="fn">count</span>()
-            <span class="kw">if</span> abs(curr_cnt - last_cnt) / max(last_cnt, <span class="num">1</span>) > rule.threshold / <span class="num">100</span>:
-                warn_flags[rule.rule_id] = <span class="str">'VOLUME_ANOMALY'</span>
-            <span class="kw">continue</span>
-        <span class="kw">elif</span> rule.type == <span class="str">'CUSTOM_SQL'</span>:
-            failed = df.<span class="fn">filter</span>(<span class="fn">expr</span>(<span class="str">f'NOT ({rule.sql_expression})'</span>))
-
-        self.<span class="fn">log_dq_result</span>(rule, failed.<span class="fn">count</span>(), df.<span class="fn">count</span>())
-        self.<span class="fn">save_samples</span>(failed, rule)
-
-        <span class="kw">if</span>   rule.fail_action == <span class="str">'ABORT'</span>:      <span class="kw">raise</span> <span class="err">DQAbortException</span>(rule)
-        <span class="kw">elif</span> rule.fail_action == <span class="str">'QUARANTINE'</span>: quarantine_rows = quarantine_rows.<span class="fn">union</span>(failed); df = df.<span class="fn">subtract</span>(failed)
-        <span class="kw">elif</span> rule.fail_action == <span class="str">'FLAG'</span>:       df = df.<span class="fn">withColumn</span>(<span class="str">'PROC_DQ_FLAGS'</span>, ...)
-
-    <span class="kw">return</span> df, quarantine_rows</pre>
-```
-
-  </div>
-</div>
-
-<!-- ══ VIEW: ORACLE SCHEMA ══ -->
-
-<div class="view" id="view-oracle">
-  <div class="sec-head">
-    <div><div class="sec-sub">COMPLETE SCHEMA REFERENCE</div><div class="sec-title">All 14 Oracle Config Tables — Full DDL</div></div>
-  </div>
-
-  <div class="grid-2">
-    <div class="code-wrap">
-      <div class="code-header"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>&nbsp; oracle_schema_part1.sql — core pipeline tables</div>
-      <pre><span class="cmt">-- ═══════════════════════════════════════════════
--- EDF ORACLE SCHEMA — ENTERPRISE DATA FRAMEWORK
--- All behavior of the framework lives here
--- ═══════════════════════════════════════════════</span>
-
-<span class="kw">CREATE TABLE</span> <span class="col">PIPELINE_REGISTRY</span> (
-pipeline_id      <span class="fn">NUMBER</span>(<span class="num">10</span>)    <span class="kw">PRIMARY KEY</span>,
-pipeline_nm      <span class="fn">VARCHAR2</span>(<span class="num">200</span>) <span class="kw">NOT NULL UNIQUE</span>,
-owner_id         <span class="fn">VARCHAR2</span>(<span class="num">100</span>) <span class="kw">NOT NULL</span>,
-team_nm          <span class="fn">VARCHAR2</span>(<span class="num">100</span>),
-source_hdfs_path <span class="fn">VARCHAR2</span>(<span class="num">1000</span>),
-target_hdfs_path <span class="fn">VARCHAR2</span>(<span class="num">1000</span>) <span class="kw">NOT NULL</span>,
-source_format    <span class="fn">VARCHAR2</span>(<span class="num">20</span>),   <span class="cmt">– parquet/orc/csv/json/delta</span>
-target_format    <span class="fn">VARCHAR2</span>(<span class="num">20</span>)  <span class="kw">DEFAULT</span> <span class="str">‘parquet’</span>,
-partition_cols   <span class="fn">VARCHAR2</span>(<span class="num">500</span>),  <span class="cmt">– CSV list</span>
-write_mode       <span class="fn">VARCHAR2</span>(<span class="num">20</span>)  <span class="kw">DEFAULT</span> <span class="str">‘overwrite’</span>,
-schedule_cron    <span class="fn">VARCHAR2</span>(<span class="num">100</span>),
-sla_minutes      <span class="fn">NUMBER</span>(<span class="num">5</span>),
-sla_at_risk_pct  <span class="fn">NUMBER</span>(<span class="num">3</span>) <span class="kw">DEFAULT</span> <span class="num">70</span>, <span class="cmt">– alert when 70% of SLA elapsed</span>
-retry_count      <span class="fn">NUMBER</span>(<span class="num">2</span>) <span class="kw">DEFAULT</span> <span class="num">3</span>,
-retry_wait_secs  <span class="fn">NUMBER</span>(<span class="num">5</span>) <span class="kw">DEFAULT</span> <span class="num">300</span>,
-active_flg       <span class="fn">CHAR</span>(<span class="num">1</span>)         <span class="kw">DEFAULT</span> <span class="str">‘Y’</span>,
-created_ts       <span class="fn">TIMESTAMP</span>       <span class="kw">DEFAULT</span> <span class="fn">SYSTIMESTAMP</span>,
-updated_ts       <span class="fn">TIMESTAMP</span>       <span class="kw">DEFAULT</span> <span class="fn">SYSTIMESTAMP</span>
-);
-
-<span class="kw">CREATE TABLE</span> <span class="col">TRANSFORM_STEPS</span> (
-step_id          <span class="fn">NUMBER</span>(<span class="num">10</span>)    <span class="kw">PRIMARY KEY</span>,
-pipeline_id      <span class="fn">NUMBER</span>(<span class="num">10</span>)    <span class="kw">NOT NULL REFERENCES</span> <span class="col">PIPELINE_REGISTRY</span>,
-step_seq         <span class="fn">NUMBER</span>(<span class="num">5</span>)     <span class="kw">NOT NULL</span>,
-step_type        <span class="fn">VARCHAR2</span>(<span class="num">20</span>)  <span class="kw">NOT NULL</span>,
-step_sql         <span class="fn">CLOB</span>,          <span class="cmt">– the SQL expression / business logic</span>
-target_alias     <span class="fn">VARCHAR2</span>(<span class="num">200</span>),
-groupby_cols     <span class="fn">VARCHAR2</span>(<span class="num">1000</span>), <span class="cmt">– for AGGREGATE</span>
-orderby_cols     <span class="fn">VARCHAR2</span>(<span class="num">500</span>),  <span class="cmt">– for WINDOW/DEDUP</span>
-partition_cols   <span class="fn">VARCHAR2</span>(<span class="num">500</span>),  <span class="cmt">– for WINDOW</span>
-depends_on_step  <span class="fn">NUMBER</span>(<span class="num">10</span>),     <span class="cmt">– dependency chain</span>
-enabled_flg      <span class="fn">CHAR</span>(<span class="num">1</span>)        <span class="kw">DEFAULT</span> <span class="str">‘Y’</span>,
-<span class="kw">UNIQUE</span> (pipeline_id, step_seq)   <span class="cmt">– enforce ordering</span>
-);
-
-<span class="kw">CREATE TABLE</span> <span class="col">SOURCE_CONFIG</span> (
-source_id        <span class="fn">NUMBER</span>(<span class="num">10</span>)    <span class="kw">PRIMARY KEY</span>,
-pipeline_id      <span class="fn">NUMBER</span>(<span class="num">10</span>)    <span class="kw">NOT NULL</span>,
-source_alias     <span class="fn">VARCHAR2</span>(<span class="num">100</span>), <span class="cmt">– df alias for joins</span>
-source_type      <span class="fn">VARCHAR2</span>(<span class="num">20</span>),  <span class="cmt">– HDFS/JDBC/KAFKA/SFTP/API/S3</span>
-conn_string      <span class="fn">VARCHAR2</span>(<span class="num">2000</span>),
-schema_table     <span class="fn">VARCHAR2</span>(<span class="num">500</span>),
-source_format    <span class="fn">VARCHAR2</span>(<span class="num">20</span>),
-auth_vault_key   <span class="fn">VARCHAR2</span>(<span class="num">200</span>), <span class="cmt">– key in Vault, never plaintext</span>
-partition_col    <span class="fn">VARCHAR2</span>(<span class="num">100</span>),
-num_partitions   <span class="fn">NUMBER</span>(<span class="num">5</span>),
-filter_sql       <span class="fn">VARCHAR2</span>(<span class="num">2000</span>), <span class="cmt">– push-down predicate</span>
-is_primary_src   <span class="fn">CHAR</span>(<span class="num">1</span>) <span class="kw">DEFAULT</span> <span class="str">‘Y’</span>
-);</pre>
-</div>
-
-```
-<div class="code-wrap">
-  <div class="code-header"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>&nbsp; oracle_schema_part2.sql — audit, errors, environment</div>
-  <pre><span class="kw">CREATE TABLE</span> <span class="col">AUDIT_LOG</span> (
-```
-
-run_id           <span class="fn">VARCHAR2</span>(<span class="num">36</span>)  <span class="kw">PRIMARY KEY</span>, <span class="cmt">– UUID</span>
-pipeline_id      <span class="fn">NUMBER</span>(<span class="num">10</span>)   <span class="kw">NOT NULL</span>,
-trigger_type     <span class="fn">VARCHAR2</span>(<span class="num">20</span>), <span class="cmt">– SCHEDULED/MANUAL/REPROCESS/API</span>
-business_date    <span class="fn">DATE</span>          <span class="kw">NOT NULL</span>,
-batch_id         <span class="fn">VARCHAR2</span>(<span class="num">100</span>),
-start_ts         <span class="fn">TIMESTAMP</span>     <span class="kw">NOT NULL</span>,
-end_ts           <span class="fn">TIMESTAMP</span>,
-duration_secs    <span class="fn">NUMBER</span>(<span class="num">10</span>),
-rows_src         <span class="fn">NUMBER</span>(<span class="num">15</span>),
-rows_passed_dq   <span class="fn">NUMBER</span>(<span class="num">15</span>),
-rows_quarantined <span class="fn">NUMBER</span>(<span class="num">15</span>),
-rows_written     <span class="fn">NUMBER</span>(<span class="num">15</span>),
-status           <span class="fn">VARCHAR2</span>(<span class="num">20</span>), <span class="cmt">– SUCCESS/FAILED/PARTIAL/RUNNING</span>
-sla_met_flg      <span class="fn">CHAR</span>(<span class="num">1</span>),
-schema_ver       <span class="fn">VARCHAR2</span>(<span class="num">20</span>),
-spark_app_id     <span class="fn">VARCHAR2</span>(<span class="num">100</span>),
-env_nm           <span class="fn">VARCHAR2</span>(<span class="num">20</span>),  <span class="cmt">– ONPREM/DATABRICKS/GCP/AWS</span>
-created_ts       <span class="fn">TIMESTAMP</span>     <span class="kw">DEFAULT</span> <span class="fn">SYSTIMESTAMP</span>
-);
-
-<span class="kw">CREATE TABLE</span> <span class="col">ENVIRONMENT_CONFIG</span> (
-env_id           <span class="fn">NUMBER</span>(<span class="num">5</span>)     <span class="kw">PRIMARY KEY</span>,
-env_nm           <span class="fn">VARCHAR2</span>(<span class="num">30</span>)  <span class="kw">NOT NULL</span>, <span class="cmt">– ONPREM/DATABRICKS/GCP/AWS</span>
-hdfs_base_path   <span class="fn">VARCHAR2</span>(<span class="num">500</span>), <span class="cmt">– hdfs:// or s3a:// or gs://</span>
-spark_master     <span class="fn">VARCHAR2</span>(<span class="num">200</span>), <span class="cmt">– yarn/local/spark://host</span>
-hive_meta_uri    <span class="fn">VARCHAR2</span>(<span class="num">500</span>),
-impala_jdbc_url  <span class="fn">VARCHAR2</span>(<span class="num">500</span>),
-oracle_jdbc_url  <span class="fn">VARCHAR2</span>(<span class="num">500</span>), <span class="cmt">– config store JDBC</span>
-storage_prefix   <span class="fn">VARCHAR2</span>(<span class="num">100</span>), <span class="cmt">– s3a: / gs: / abfs: / hdfs:</span>
-catalog_type     <span class="fn">VARCHAR2</span>(<span class="num">50</span>),  <span class="cmt">– hive/unity/glue/dataplex</span>
-active_flg       <span class="fn">CHAR</span>(<span class="num">1</span>) <span class="kw">DEFAULT</span> <span class="str">‘N’</span>, <span class="cmt">– ONE row = Y at a time</span>
-notes            <span class="fn">VARCHAR2</span>(<span class="num">2000</span>)
-);
-
-<span class="kw">CREATE TABLE</span> <span class="col">SCHEMA_REGISTRY</span> (
-schema_id        <span class="fn">NUMBER</span>(<span class="num">10</span>)    <span class="kw">PRIMARY KEY</span>,
-table_nm         <span class="fn">VARCHAR2</span>(<span class="num">200</span>) <span class="kw">NOT NULL</span>,
-column_nm        <span class="fn">VARCHAR2</span>(<span class="num">200</span>) <span class="kw">NOT NULL</span>,
-data_type        <span class="fn">VARCHAR2</span>(<span class="num">100</span>) <span class="kw">NOT NULL</span>,
-nullable_flg     <span class="fn">CHAR</span>(<span class="num">1</span>) <span class="kw">DEFAULT</span> <span class="str">‘Y’</span>,
-is_pk_flg        <span class="fn">CHAR</span>(<span class="num">1</span>) <span class="kw">DEFAULT</span> <span class="str">‘N’</span>,
-is_audit_col_flg <span class="fn">CHAR</span>(<span class="num">1</span>) <span class="kw">DEFAULT</span> <span class="str">‘N’</span>,
-pii_flg          <span class="fn">CHAR</span>(<span class="num">1</span>) <span class="kw">DEFAULT</span> <span class="str">‘N’</span>, <span class="cmt">– PII masking required</span>
-schema_version   <span class="fn">VARCHAR2</span>(<span class="num">20</span>)  <span class="kw">NOT NULL</span>,
-effective_dt     <span class="fn">DATE</span>          <span class="kw">NOT NULL</span>,
-deprecated_dt    <span class="fn">DATE</span>,          <span class="cmt">– null = still active</span>
-column_desc      <span class="fn">VARCHAR2</span>(<span class="num">2000</span>),
-owner_id         <span class="fn">VARCHAR2</span>(<span class="num">100</span>)
-);
-
-<span class="kw">CREATE TABLE</span> <span class="col">LINEAGE_MAP</span> (
-lineage_id       <span class="fn">NUMBER</span>(<span class="num">15</span>)    <span class="kw">PRIMARY KEY</span>,
-run_id           <span class="fn">VARCHAR2</span>(<span class="num">36</span>)  <span class="kw">NOT NULL</span>,
-pipeline_id      <span class="fn">NUMBER</span>(<span class="num">10</span>)    <span class="kw">NOT NULL</span>,
-step_id          <span class="fn">NUMBER</span>(<span class="num">10</span>),
-src_table        <span class="fn">VARCHAR2</span>(<span class="num">500</span>) <span class="kw">NOT NULL</span>,
-src_column       <span class="fn">VARCHAR2</span>(<span class="num">200</span>),
-tgt_table        <span class="fn">VARCHAR2</span>(<span class="num">500</span>) <span class="kw">NOT NULL</span>,
-tgt_column       <span class="fn">VARCHAR2</span>(<span class="num">200</span>),
-transform_expr   <span class="fn">VARCHAR2</span>(<span class="num">2000</span>), <span class="cmt">– exact SQL expression</span>
-exec_ts          <span class="fn">TIMESTAMP</span>      <span class="kw">DEFAULT</span> <span class="fn">SYSTIMESTAMP</span>
-); <span class="cmt">– Never updated, only inserted. Immutable audit trail of data movement.</span></pre>
-</div>
-
-  </div>
-</div>
-
-<!-- ══ VIEW: CLOUD ══ -->
-
-<div class="view" id="view-cloud">
-  <div class="sec-head">
-    <div><div class="sec-sub">ZERO-CODE MIGRATION</div><div class="sec-title">Cloud Portability — One Config Row Flip</div></div>
-  </div>
-
-  <div style="background:rgba(5,150,105,0.05); border:1px solid rgba(5,150,105,0.2); border-radius:8px; padding:16px; margin-bottom:20px; font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text2); line-height:2;">
-    <span style="color:var(--green2); font-weight:700;">MIGRATION = 2 SQL STATEMENTS:</span>
-    &nbsp;<span style="color:var(--text3);">UPDATE ENVIRONMENT_CONFIG SET active_flg='N' WHERE env_nm='ONPREM';</span>
-    &nbsp;<span style="color:var(--text3);">UPDATE ENVIRONMENT_CONFIG SET active_flg='Y' WHERE env_nm='DATABRICKS';</span>
-    &nbsp;<span style="color:var(--green2);">→ Runner reads active env at startup. Zero code changes. All TRANSFORM_STEPS SQL runs identically on Spark anywhere.</span>
-  </div>
-
-  <div class="grid-2" style="margin-bottom:16px;">
-    <div class="card" style="border-left:3px solid var(--green2);">
-      <div class="card-head"><div><div class="card-head-title" style="color:var(--green2);">✓ ON-PREMISES (CURRENT)</div><div class="card-head-sub">Active environment</div></div></div>
-      <div class="card-body" style="padding:0;">
-        <table class="tbl">
-          <tr><td class="dim">Storage</td><td class="mono cyan-t">HDFS (hdfs://namenode:8020)</td></tr>
-          <tr><td class="dim">Processing</td><td class="mono cyan-t">Apache Spark 3.x (YARN)</td></tr>
-          <tr><td class="dim">Metastore</td><td class="mono cyan-t">Hive Metastore (HMS)</td></tr>
-          <tr><td class="dim">Query Engine</td><td class="mono cyan-t">Cloudera Impala</td></tr>
-          <tr><td class="dim">Orchestration</td><td class="mono cyan-t">Apache Airflow / Oozie</td></tr>
-          <tr><td class="dim">Catalog</td><td class="mono cyan-t">Oracle SCHEMA_REGISTRY</td></tr>
-          <tr><td class="dim">Format</td><td class="mono cyan-t">Parquet + Snappy / ORC</td></tr>
-          <tr><td class="dim">Auth</td><td class="mono cyan-t">Kerberos + Ranger RBAC</td></tr>
-          <tr><td class="dim">Config Store</td><td class="mono red-t">Oracle DB (on-prem)</td></tr>
-        </table>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head"><div><div class="card-head-title" style="color:var(--text3);">DATABRICKS (READY)</div><div class="card-head-sub">Flip active_flg to migrate</div></div></div>
-      <div class="card-body" style="padding:0;">
-        <table class="tbl">
-          <tr><td class="dim">Storage</td><td class="mono dim">Delta Lake (S3/ADLS/GCS)</td></tr>
-          <tr><td class="dim">Processing</td><td class="mono dim">Databricks Spark (managed)</td></tr>
-          <tr><td class="dim">Metastore</td><td class="mono dim">Unity Catalog</td></tr>
-          <tr><td class="dim">Query Engine</td><td class="mono dim">Databricks SQL Warehouse</td></tr>
-          <tr><td class="dim">Orchestration</td><td class="mono dim">Databricks Workflows / MWAA</td></tr>
-          <tr><td class="dim">Catalog</td><td class="mono dim">Unity + Oracle SCHEMA_REG</td></tr>
-          <tr><td class="dim">Format</td><td class="mono dim">Delta (ACID, time travel)</td></tr>
-          <tr><td class="dim">Auth</td><td class="mono dim">Unity Catalog RBAC + IAM</td></tr>
-          <tr><td class="dim">Config Store</td><td class="mono red-t">Oracle RDS (cloud-managed)</td></tr>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-head"><div><div class="card-head-title" style="color:var(--text3);">GCP (READY)</div></div></div>
-      <div class="card-body" style="padding:0;">
-        <table class="tbl">
-          <tr><td class="dim">Storage</td><td class="mono dim">Google Cloud Storage (gs://)</td></tr>
-          <tr><td class="dim">Processing</td><td class="mono dim">Cloud Dataproc (Spark)</td></tr>
-          <tr><td class="dim">Metastore</td><td class="mono dim">Dataplex / BigQuery Meta</td></tr>
-          <tr><td class="dim">Query Engine</td><td class="mono dim">BigQuery</td></tr>
-          <tr><td class="dim">Orchestration</td><td class="mono dim">Cloud Composer (Airflow)</td></tr>
-          <tr><td class="dim">Config Store</td><td class="mono red-t">Cloud SQL (Oracle compat)</td></tr>
-        </table>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-head"><div><div class="card-head-title" style="color:var(--text3);">AWS (READY)</div></div></div>
-      <div class="card-body" style="padding:0;">
-        <table class="tbl">
-          <tr><td class="dim">Storage</td><td class="mono dim">S3 (s3a://)</td></tr>
-          <tr><td class="dim">Processing</td><td class="mono dim">EMR (Spark) / Glue</td></tr>
-          <tr><td class="dim">Metastore</td><td class="mono dim">AWS Glue Catalog</td></tr>
-          <tr><td class="dim">Query Engine</td><td class="mono dim">Athena / Redshift</td></tr>
-          <tr><td class="dim">Orchestration</td><td class="mono dim">MWAA (Managed Airflow)</td></tr>
-          <tr><td class="dim">Config Store</td><td class="mono red-t">RDS Oracle / Aurora</td></tr>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ VIEW: OPS DASHBOARD ══ -->
-
-<div class="view" id="view-ops">
-  <div class="sec-head">
-    <div><div class="sec-sub">OPERATIONS COMMAND CENTER</div><div class="sec-title">Real-Time Pipeline Health — Sourced from Oracle AUDIT_LOG</div></div>
-  </div>
-
-  <div class="grid-4" style="margin-bottom:20px;">
-    <div class="stat-card" style="border-top:2px solid var(--green2);">
-      <div class="stat-num" style="color:var(--green2);">16</div>
-      <div class="stat-label">Pipelines Today</div>
-      <div class="stat-delta" style="color:var(--green2);">14 complete · 2 running</div>
-    </div>
-    <div class="stat-card" style="border-top:2px solid var(--cyan2);">
-      <div class="stat-num" style="color:var(--cyan2);">99.97%</div>
-      <div class="stat-label">Overall DQ Pass Rate</div>
-      <div class="stat-delta" style="color:var(--green2);">↑ vs 99.91% yesterday</div>
-    </div>
-    <div class="stat-card" style="border-top:2px solid var(--orange2);">
-      <div class="stat-num" style="color:var(--orange2);">3</div>
-      <div class="stat-label">Rows Quarantined</div>
-      <div class="stat-delta" style="color:var(--green2);">↓ vs 47 yesterday</div>
-    </div>
-    <div class="stat-card" style="border-top:2px solid var(--gold2);">
-      <div class="stat-num" style="color:var(--gold2);">2.1B</div>
-      <div class="stat-label">Total Rows Processed</div>
-      <div class="stat-delta" style="color:var(--green2);">↑ +4.2% vs yesterday</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-head">
-      <div class="card-head-icon" style="background:rgba(6,182,212,0.1);color:var(--cyan);">📊</div>
-      <div><div class="card-head-title">Today's Pipeline Run Status</div><div class="card-head-sub">Live from AUDIT_LOG — refreshes every 60s</div></div>
-    </div>
-    <div class="card-body" style="padding:0;">
-      <table class="tbl">
-        <thead><tr><th>PIPELINE</th><th>BATCH DATE</th><th>START</th><th>DURATION</th><th>ROWS IN</th><th>ROWS PASSED</th><th>QUAR</th><th>DQ %</th><th>SLA</th><th>STATUS</th></tr></thead>
-        <tbody>
-          <tr>
-            <td class="mono cyan-t">trade_enrichment_daily</td>
-            <td class="mono dim">2025-04-13</td><td class="mono dim">06:00</td><td class="mono dim">48s</td>
-            <td class="mono">284,912</td><td class="mono green-t">279,085</td><td class="mono orange-t">3</td>
-            <td><div class="prog-bar-wrap"><div class="prog-bar" style="width:99.99%;background:var(--green2);"></div></div><span class="mono" style="font-size:9px;">99.99%</span></td>
-            <td><span class="tag tag-green">MET</span></td>
-            <td><span class="tag tag-green">COMPLETE</span></td>
-          </tr>
-          <tr>
-            <td class="mono cyan-t">counterparty_ref_load</td>
-            <td class="mono dim">2025-04-13</td><td class="mono dim">05:45</td><td class="mono dim">12m</td>
-            <td class="mono">45,200</td><td class="mono green-t">45,200</td><td class="mono dim">0</td>
-            <td><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:var(--green2);"></div></div><span class="mono" style="font-size:9px;">100%</span></td>
-            <td><span class="tag tag-green">MET</span></td>
-            <td><span class="tag tag-green">COMPLETE</span></td>
-          </tr>
-          <tr>
-            <td class="mono cyan-t">risk_aggregation_daily</td>
-            <td class="mono dim">2025-04-13</td><td class="mono dim">06:30</td><td class="mono orange-t">RUNNING 58m</td>
-            <td class="mono">1,200,000</td><td class="mono">890,000</td><td class="mono dim">0</td>
-            <td><div class="prog-bar-wrap"><div class="prog-bar" style="width:74%;background:var(--cyan);"></div></div><span class="mono" style="font-size:9px;">74.1%</span></td>
-            <td><span class="tag tag-orange">AT RISK</span></td>
-            <td><span class="tag tag-cyan">RUNNING</span></td>
-          </tr>
-          <tr>
-            <td class="mono cyan-t">fx_rates_ref</td>
-            <td class="mono dim">2025-04-13</td><td class="mono dim">05:30</td><td class="mono dim">8s</td>
-            <td class="mono">350</td><td class="mono green-t">350</td><td class="mono dim">0</td>
-            <td><div class="prog-bar-wrap"><div class="prog-bar" style="width:100%;background:var(--green2);"></div></div><span class="mono" style="font-size:9px;">100%</span></td>
-            <td><span class="tag tag-green">MET</span></td>
-            <td><span class="tag tag-green">COMPLETE</span></td>
-          </tr>
-          <tr>
-            <td class="mono cyan-t">pnl_gold_rollup</td>
-            <td class="mono dim">2025-04-13</td><td class="mono dim">—</td><td class="mono dim">—</td>
-            <td class="mono dim">—</td><td class="mono dim">—</td><td class="mono dim">—</td>
-            <td><div class="prog-bar-wrap"><div class="prog-bar" style="width:0%;background:var(--border);"></div></div><span class="mono" style="font-size:9px;">—</span></td>
-            <td><span class="tag tag-blue">PENDING</span></td>
-            <td><span class="tag tag-blue">WAITING</span></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-  </div><!-- end content -->
-</div><!-- end main -->
-</div><!-- end app -->
 
 <script>
+
+/* =========================
+NAV
+========================= */
+
+const NAV = [
+
+{ id:"index", label:"Master Index" },
+{ id:"pipeline", label:"Pipeline Runner" },
+{ id:"scheduler", label:"Scheduler" },
+{ id:"migration", label:"Migration Toolkit" },
+{ id:"watermark", label:"Watermark" },
+{ id:"circuit", label:"Circuit Breaker" },
+{ id:"ops", label:"Ops Dashboard" }
+
+]
+
+/* =========================
+SIDEBAR
+========================= */
+
+function buildSidebar(active){
+
+let html = '<div class="logo">EDF v6</div>'
+
+NAV.forEach(n=>{
+
+html+=`
+<div 
+class="nav-item ${active===n.id?'active':''}"
+onclick="goto('${n.id}')"
+>
+${n.label}
+</div>
+`
+
+})
+
+document.getElementById("sidebar").innerHTML = html
+
+}
+
+/* =========================
+VIEWS
+========================= */
+
 const views = {
-  'overview': 'Architecture Overview',
-  'builder':  'Pipeline Builder',
-  'sources':  'Multi-Source Config',
-  'audit':    'Audit Columns',
-  'errors':   'Error Logging',
-  'email':    'Email Engine',
-  'sla':      'SLA Monitor',
-  'dq':       'DQ Engine',
-  'oracle':   'Oracle Schema',
-  'cloud':    'Cloud Portability',
-  'ops':      'Ops Dashboard'
-};
 
-const paths = {
-  'overview': 'EDF / Framework / Architecture',
-  'builder':  'EDF / Framework / Pipeline Builder',
-  'sources':  'EDF / Framework / Multi-Source',
-  'audit':    'EDF / Framework / Audit Columns',
-  'errors':   'EDF / Monitoring / Error Logging',
-  'email':    'EDF / Monitoring / Email Engine',
-  'sla':      'EDF / Monitoring / SLA Monitor',
-  'dq':       'EDF / Monitoring / DQ Engine',
-  'oracle':   'EDF / Schema / Oracle Config',
-  'cloud':    'EDF / Schema / Cloud Portability',
-  'ops':      'EDF / Schema / Ops Dashboard'
-};
+index:()=>`
 
-function nav(el, name) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('view-' + name).classList.add('active');
-  document.getElementById('topbar-title').textContent = views[name];
-  document.getElementById('topbar-path').textContent  = paths[name];
+<div class="grid">
+
+<div class="stat">
+<div class="stat-num">42</div>
+modules
+</div>
+
+<div class="stat">
+<div class="stat-num">20</div>
+oracle tables
+</div>
+
+<div class="stat">
+<div class="stat-num">26</div>
+audit columns
+</div>
+
+<div class="stat">
+<div class="stat-num">14</div>
+runner steps
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="card-header">
+framework summary
+</div>
+
+<div class="card-body">
+
+config driven pipelines  
+zero business logic in spark runner  
+
+all transformations stored in oracle  
+
+</div>
+
+</div>
+
+`,
+
+pipeline:()=>`
+
+<div class="card">
+
+<div class="card-header">
+spark runner execution flow
+</div>
+
+<div class="card-body">
+
+<div class="code">
+
+load config  
+apply transform steps  
+run dq  
+inject audit columns  
+write curated  
+update watermark  
+
+</div>
+
+</div>
+
+</div>
+
+`,
+
+scheduler:()=>`
+
+<div class="card">
+
+<div class="card-header">
+dual scheduler
+</div>
+
+<div class="card-body">
+
+autosys + airflow supported  
+
+scheduler config stored in oracle  
+
+same runner command executed  
+
+</div>
+
+</div>
+
+`,
+
+migration:()=>`
+
+<div class="card">
+
+<div class="card-header">
+migration paths
+</div>
+
+<div class="card-body">
+
+existing spark → edf  
+
+autosys → scheduler config  
+
+onprem → databricks  
+
+</div>
+
+</div>
+
+`,
+
+watermark:()=>`
+
+<div class="card">
+
+<div class="card-header">
+incremental processing
+</div>
+
+<div class="card-body">
+
+high watermark stored in oracle  
+
+only new records processed  
+
+no duplicates  
+
+</div>
+
+</div>
+
+`,
+
+circuit:()=>`
+
+<div class="card">
+
+<div class="card-header">
+circuit breaker states
+</div>
+
+<div class="card-body">
+
+closed → normal  
+
+open → blocked  
+
+half open → probe  
+
+</div>
+
+</div>
+
+`,
+
+ops:()=>`
+
+<div class="card">
+
+<div class="card-header">
+pipeline health
+</div>
+
+<div class="card-body">
+
+dq pass rate  
+
+cost tracking  
+
+sla monitoring  
+
+</div>
+
+</div>
+
+`
+
 }
 
-// ── PIPELINE BUILDER ──
-const steps = [];
-const dqs   = [];
+/* =========================
+NAVIGATION
+========================= */
 
-function addStep() {
-  const type  = document.getElementById('step-type').value;
-  const sql   = document.getElementById('step-sql').value.trim();
-  const alias = document.getElementById('step-alias').value.trim();
-  if (!sql) { alert('Enter a SQL expression first.'); return; }
-  steps.push({ seq: steps.length + 1, type, sql, alias });
-  renderSteps();
-  document.getElementById('step-sql').value   = '';
-  document.getElementById('step-alias').value = '';
+function goto(id){
+
+buildSidebar(id)
+
+document.getElementById("title").innerText =
+NAV.find(x=>x.id===id).label
+
+document.getElementById("content").innerHTML =
+views[id]()
+
 }
 
-function autoDetect() {
-  const sql = document.getElementById('step-sql').value.trim().toUpperCase();
-  let t = 'FILTER';
-  if (/SUM\(|COUNT\(|AVG\(|MAX\(|MIN\(|GROUP BY/.test(sql))                t = 'AGGREGATE';
-  else if (/CASE WHEN|DECODE\(/.test(sql))                                  t = 'DECODE';
-  else if (/JOIN|FROM .* WHERE/.test(sql) && sql.includes('JOIN'))          t = 'JOIN';
-  else if (/CAST\(|CAST /.test(sql))                                        t = 'CAST';
-  else if (/ROW_NUMBER\(|RANK\(|DENSE_RANK\(|LAG\(|LEAD\(/.test(sql))      t = 'WINDOW';
-  else if (/NOT.*=|!=|<>|NOT IN|BETWEEN|AND |OR /.test(sql) && !sql.includes('THEN')) t = 'FILTER';
-  else if (/\*|\/|\+|\-/.test(sql) && !sql.startsWith('NOT'))              t = 'DERIVE';
-  document.getElementById('step-type').value = t;
-}
+/* =========================
+INIT
+========================= */
 
-function clearSteps() { steps.length = 0; dqs.length = 0; renderSteps(); document.getElementById('dq-list').innerHTML=''; }
+goto("index")
 
-function renderSteps() {
-  const el = document.getElementById('steps-list');
-  if (!steps.length) { el.innerHTML = '<div style="color:var(--text3);font-family:IBM Plex Mono,monospace;font-size:11px;padding:8px;text-align:center;">No steps yet.</div>'; return; }
-  el.innerHTML = steps.map(s => `
-    <div class="step-card">
-      <div class="step-num">${s.seq}</div>
-      <div class="step-content">
-        <div class="step-type">${s.type}</div>
-        <div class="step-sql">${s.sql.substring(0, 80)}${s.sql.length>80?'…':''}</div>
-        ${s.alias ? `<div class="step-alias">→ alias: ${s.alias}</div>` : ''}
-      </div>
-    </div>`).join('');
-}
-
-function addDQ() {
-  const col    = document.getElementById('dq-col').value.trim();
-  const type   = document.getElementById('dq-type').value;
-  const action = document.getElementById('dq-action').value;
-  if (!col) return;
-  dqs.push({ col, type, action });
-  const el = document.getElementById('dq-list');
-  el.innerHTML += `<div class="step-card" style="margin-top:6px;">
-    <div class="step-content">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <span class="tag tag-orange">${type}</span>
-        <span class="mono dim">${col}</span>
-        <span class="tag tag-red">${action}</span>
-      </div>
-    </div></div>`;
-}
-
-function generateSQL() {
-  const id    = Math.floor(Math.random() * 900) + 100;
-  const name  = document.getElementById('pip-name').value || 'my_pipeline';
-  const owner = document.getElementById('pip-owner').value || 'user';
-  const src   = document.getElementById('pip-src').value || 'hdfs://raw/data/';
-  const tgt   = document.getElementById('pip-tgt').value || 'hdfs://curated/data/';
-  const cron  = document.getElementById('pip-cron').value || '0 6 * * *';
-  const sla   = document.getElementById('pip-sla').value || '120';
-  const fmt   = document.getElementById('pip-fmt').value || 'parquet';
-  const wm    = document.getElementById('pip-wm').value || 'overwrite';
-  const eto   = document.getElementById('email-to').value || 'team@company.com';
-  const eevt  = document.getElementById('email-evt').value || 'ALL';
-
-  let sql = `-- ════════════════════════════════════════════════════\n`;
-  sql    += `-- AUTO-GENERATED by EDF Pipeline Builder\n`;
-  sql    += `-- Pipeline: ${name.toUpperCase()} | Generated: ${new Date().toISOString().slice(0,19)}\n`;
-  sql    += `-- ════════════════════════════════════════════════════\n\n`;
-
-  sql += `-- STEP 1: Register pipeline\nINSERT INTO PIPELINE_REGISTRY (\n  pipeline_id, pipeline_nm, owner_id,\n  source_hdfs_path, target_hdfs_path,\n  source_format, target_format, write_mode,\n  schedule_cron, sla_minutes, active_flg\n) VALUES (\n  ${id}, '${name}', '${owner}',\n  '${src}', '${tgt}',\n  '${fmt}', 'parquet', '${wm}',\n  '${cron}', ${sla}, 'Y'\n);\n\n`;
-
-  if (steps.length) {
-    sql += `-- STEP 2: Business logic transform steps\n`;
-    steps.forEach((s, i) => {
-      const sid = id * 100 + (i + 1);
-      sql += `INSERT INTO TRANSFORM_STEPS (step_id,pipeline_id,step_seq,step_type,step_sql,target_alias) VALUES (\n  ${sid}, ${id}, ${s.seq}, '${s.type}',\n  '${s.sql.replace(/'/g,"''")}',\n  ${s.alias ? `'${s.alias}'` : 'NULL'}\n);\n`;
-    });
-    sql += '\n';
-  }
-
-  if (dqs.length) {
-    sql += `-- STEP 3: DQ rules\n`;
-    dqs.forEach((d, i) => {
-      sql += `INSERT INTO DQ_RULES (rule_id,pipeline_id,rule_type,column_name,fail_action) VALUES (${id*10+i}, ${id}, '${d.type}', '${d.col}', '${d.action}');\n`;
-    });
-    sql += '\n';
-  }
-
-  sql += `-- STEP 4: Email configuration\nINSERT INTO EMAIL_CONFIG (email_cfg_id,pipeline_id,event_type,recipients,include_stats,active_flg)\nVALUES (${id}, ${id}, '${eevt}', '${eto}', 'Y', 'Y');\n\n`;
-  sql += `-- STEP 5: Tableau publish (auto-certified datasource)\nINSERT INTO TABLEAU_PUBLISH_CONFIG (publish_id,pipeline_id,datasource_name,refresh_trigger,certified_flg)\nVALUES (${id}, ${id}, '${name.replace(/_/g,' ')} DS', 'SLA_COMPLETION', 'Y');\n\n`;
-  sql += `-- Pipeline ${name.toUpperCase()} is now LIVE.\n-- No code written. No deployment needed.\n-- Add to Airflow: meta-DAG will auto-detect this new pipeline_id.\n-- Audit columns will be auto-appended on first run.`;
-
-  document.getElementById('gen-sql').innerHTML = sql
-    .replace(/\bINSERT INTO\b/g, '<span class="kw">INSERT INTO</span>')
-    .replace(/\bVALUES\b/g, '<span class="kw">VALUES</span>')
-    .replace(/\bNULL\b/g, '<span class="kw">NULL</span>')
-    .replace(/--[^\n]*/g, m => `<span class="cmt">${m}</span>`)
-    .replace(/'([^']+)'/g, m => `<span class="str">${m}</span>`)
-    .replace(/\b(\d+)\b/g, '<span class="num">$1</span>');
-}
-
-// TOOLTIP
-const tt = document.getElementById('tooltip');
-document.querySelectorAll('[data-tip]').forEach(el => {
-  el.addEventListener('mouseenter', e => {
-    const [t, b] = e.currentTarget.dataset.tip.split('||');
-    document.getElementById('tt-t').textContent = t;
-    document.getElementById('tt-b').textContent = b || '';
-    tt.classList.add('show');
-  });
-  el.addEventListener('mousemove', e => {
-    tt.style.left = Math.min(e.clientX + 14, window.innerWidth - 280) + 'px';
-    tt.style.top  = (e.clientY - 10) + 'px';
-  });
-  el.addEventListener('mouseleave', () => tt.classList.remove('show'));
-});
-
-// LOG REPLAY
-function replayLogs() {
-  const el = document.getElementById('log-feed');
-  el.innerHTML = '';
-  const logs = [
-    ['ok',   '2025-04-13 06:00:00.001', 'START', '[run:a3f2-91cc] Pipeline 301 trade_enrichment_daily — STARTED. Source: hdfs://raw/trades/dt=20250413/'],
-    ['info', '2025-04-13 06:00:03.441', 'INFO',  "[step:1001] FILTER applied: trade_status != 'CANCELLED'. Rows in: 284,912. Rows out: 279,088. Dropped: 5,824."],
-    ['info', '2025-04-13 06:00:09.882', 'INFO',  '[step:1002] DERIVE applied: notional * fx_rate → notional_usd. Nulls: 0. Range OK.'],
-    ['info', '2025-04-13 06:00:14.213', 'INFO',  '[step:1003] LEFT JOIN with hdfs://ref/counterparty/ on cpty_id. Unmatched: 12 (threshold: 100). OK.'],
-    ['warn', '2025-04-13 06:00:21.554', 'WARN',  '[dq:502] RANGE CHECK on notional_usd: 3 rows exceed max=1e12. Action=QUARANTINE. Rows quarantined.'],
-    ['warn', '2025-04-13 06:00:21.555', 'WARN',  '[email] DQ_FAILURE email fired → nishant@citi.com. Template: DQ_QUARANTINE_SUMMARY.'],
-    ['info', '2025-04-13 06:00:28.901', 'INFO',  '[step:1004] DECODE applied: trade_tier CASE. LARGE=8,842. STANDARD=270,243.'],
-    ['info', '2025-04-13 06:00:34.119', 'INFO',  '[step:1005] AGGREGATE: SUM(notional_usd) GROUP BY desk, trade_date. Output: 342 rows.'],
-    ['info', '2025-04-13 06:00:35.002', 'AUDIT', '[audit] AuditInjector.append(). Zone=CURATED. 26 audit cols appended. PROC_STATUS_CD=PASSED_DQ.'],
-    ['info', '2025-04-13 06:00:42.330', 'WRITE', '[write] Writing 279,085 rows → hdfs://curated/trades/dt=20250413/ mode=overwrite. Parquet. 24 partitions.'],
-    ['info', '2025-04-13 06:00:47.881', 'AUDIT', '[lineage] LINEAGE_MAP: 301 column-level edges recorded for run a3f2-91cc. Oracle updated.'],
-    ['ok',   '2025-04-13 06:00:48.002', 'OK',    '[run:a3f2-91cc] Pipeline 301 COMPLETED. Duration: 48s. SLA: 120min ✓. LOAD_SUCCESS email sent.']
-  ];
-  let delay = 0;
-  logs.forEach(([cls, ts, lvl, msg]) => {
-    setTimeout(() => {
-      el.innerHTML += `<div class="log-entry ${cls}"><span class="log-ts">${ts}</span><span class="log-lvl">${lvl}</span><span class="log-msg">${msg}</span></div>`;
-      el.scrollTop = el.scrollHeight;
-    }, delay);
-    delay += 180;
-  });
-}
 </script>
 
 </body>
