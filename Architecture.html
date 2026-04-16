@@ -1,433 +1,1797 @@
 <!DOCTYPE html>
-<html lang="en">
 
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>EDF v6 - Enterprise Data Framework</title>
-
+<title>EDF v6 — Enterprise Data Framework</title>
 <style>
+/* ── RESET + DESIGN TOKENS ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* =========================
-RESET
-========================= */
-
-*{
-box-sizing:border-box;
-margin:0;
-padding:0;
+:root {
+–bg: #04080f;
+–s1: #080e1a;
+–s2: #0c1422;
+–s3: #101c2e;
+–bd: #162236;
+–b2: #1e3050;
+–b3: #264060;
+–cy: #06b6d4;
+–cy2: #22d3ee;
+–gn: #059669;
+–gn2: #10b981;
+–or: #d97706;
+–or2: #f59e0b;
+–rd: #dc2626;
+–rd2: #ef4444;
+–pu: #7c3aed;
+–pu2: #8b5cf6;
+–gd: #ca8a04;
+–gd2: #fbbf24;
+–pk: #db2777;
+–pk2: #ec4899;
+–lm: #65a30d;
+–lm2: #84cc16;
+–tx: #cdd9e8;
+–tx2: #94a3b8;
+–tx3: #546e8a;
 }
 
-:root{
---bg:#04080f;
---panel:#0c1422;
---panel2:#101c2e;
---border:#162236;
---text:#cdd9e8;
---muted:#94a3b8;
---accent:#06b6d4;
---success:#10b981;
---warn:#f59e0b;
---danger:#ef4444;
+html, body { height: 100%; }
+
+body {
+background: var(–bg);
+color: var(–tx);
+font-family: ‘Segoe UI’, system-ui, -apple-system, sans-serif;
+font-size: 13px;
+line-height: 1.6;
+overflow: hidden;
 }
 
-body{
-background:var(--bg);
-color:var(--text);
-font-family:Segoe UI,system-ui,sans-serif;
-font-size:13px;
+/* grid bg */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+linear-gradient(rgba(6,182,212,.016) 1px, transparent 1px),
+linear-gradient(90deg, rgba(6,182,212,.016) 1px, transparent 1px);
+background-size: 52px 52px;
+pointer-events: none;
+z-index: 0;
 }
 
-.app{
-display:flex;
-height:100vh;
+/* ── LAYOUT ── */
+.shell { display: flex; height: 100vh; position: relative; z-index: 1; }
+
+/* ── SIDEBAR ── */
+.sb {
+width: 260px;
+flex-shrink: 0;
+background: var(–s1);
+border-right: 1px solid var(–bd);
+display: flex;
+flex-direction: column;
+overflow-y: auto;
+scrollbar-width: thin;
+scrollbar-color: var(–b2) transparent;
+}
+.sb::-webkit-scrollbar { width: 4px; }
+.sb::-webkit-scrollbar-thumb { background: var(–b2); border-radius: 2px; }
+
+/* logo */
+.logo {
+padding: 18px 16px 14px;
+border-bottom: 1px solid var(–bd);
+flex-shrink: 0;
+}
+.logo-badge {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+background: rgba(6,182,212,.08);
+border: 1px solid rgba(6,182,212,.22);
+border-radius: 5px;
+padding: 4px 9px;
+font-size: 9px;
+letter-spacing: 2.5px;
+color: var(–cy);
+text-transform: uppercase;
+font-family: monospace;
+margin-bottom: 9px;
+}
+.logo-badge::before {
+content: ‘’;
+width: 5px; height: 5px;
+background: var(–cy);
+border-radius: 50%;
+animation: pulse 2s infinite;
+}
+.logo-title { font-size: 14px; font-weight: 700; line-height: 1.3; letter-spacing: -.2px; }
+.logo-sub { font-size: 10px; color: var(–tx3); margin-top: 3px; font-family: monospace; letter-spacing: 1px; }
+
+/* nav groups */
+.nav-group { padding: 10px 0 3px; }
+.nav-label {
+font-size: 9px;
+letter-spacing: 2.5px;
+color: var(–tx3);
+text-transform: uppercase;
+padding: 0 16px;
+margin-bottom: 3px;
+font-family: monospace;
+}
+.nav-item {
+display: flex;
+align-items: center;
+gap: 9px;
+padding: 7px 16px;
+cursor: pointer;
+border-left: 2px solid transparent;
+font-size: 12px;
+color: var(–tx2);
+transition: background .12s, color .12s, border-color .12s;
+user-select: none;
+}
+.nav-item:hover { background: rgba(255,255,255,.03); color: var(–tx); }
+.nav-item.active {
+background: rgba(6,182,212,.07);
+border-left-color: var(–cy);
+color: var(–cy);
+}
+.nav-ic { font-size: 13px; width: 17px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+margin-left: auto;
+border-radius: 4px;
+padding: 1px 6px;
+font-size: 9px;
+font-family: monospace;
+letter-spacing: .3px;
+}
+.nb4 { background: var(–s3); border: 1px solid var(–b2); color: var(–tx3); }
+.nb5 { background: rgba(139,92,246,.1); border: 1px solid rgba(139,92,246,.3); color: var(–pu2); }
+.nb6 { background: rgba(219,39,119,.1); border: 1px solid rgba(219,39,119,.3); color: var(–pk2); }
+
+/* ── MAIN ── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* topbar */
+.topbar {
+display: flex;
+align-items: center;
+padding: 0 24px;
+height: 52px;
+border-bottom: 1px solid var(–bd);
+background: var(–s1);
+gap: 14px;
+flex-shrink: 0;
+}
+.tb-info { display: flex; flex-direction: column; gap: 1px; }
+.tb-title { font-size: 13px; font-weight: 600; color: var(–tx); }
+.tb-path  { font-size: 10px; color: var(–tx3); font-family: monospace; }
+.tb-spacer { flex: 1; }
+.pills { display: flex; gap: 8px; }
+.pill {
+display: inline-flex;
+align-items: center;
+gap: 5px;
+padding: 4px 10px;
+border-radius: 5px;
+font-size: 9px;
+font-family: monospace;
+letter-spacing: .5px;
+}
+.pill-ok   { background: rgba(5,150,105,.1);  border: 1px solid rgba(5,150,105,.3);  color: var(–gn2); }
+.pill-ok::before { content:’’; width:5px; height:5px; background:var(–gn2); border-radius:50%; animation:pulse 2s infinite; }
+.pill-info { background: rgba(6,182,212,.1);  border: 1px solid rgba(6,182,212,.3);  color: var(–cy2); }
+
+/* content area */
+.content-area {
+flex: 1;
+overflow-y: auto;
+scrollbar-width: thin;
+scrollbar-color: var(–b2) transparent;
+}
+.content-area::-webkit-scrollbar { width: 5px; }
+.content-area::-webkit-scrollbar-thumb { background: var(–b2); border-radius: 3px; }
+
+/* page */
+.page { display: none; padding: 24px 26px; animation: fadein .2s ease; }
+.page.active { display: block; }
+
+@keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+@keyframes pulse  { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+
+/* ── TYPOGRAPHY ── */
+.eyebrow {
+font-size: 9px;
+color: var(–tx3);
+letter-spacing: 2.5px;
+text-transform: uppercase;
+margin-bottom: 5px;
+font-family: monospace;
+}
+.page-title { font-size: 19px; font-weight: 700; letter-spacing: -.4px; margin-bottom: 18px; }
+
+/* ── STAT STRIP ── */
+.stats { display: grid; gap: 10px; margin-bottom: 20px; }
+.stats-6 { grid-template-columns: repeat(6,1fr); }
+.stats-4 { grid-template-columns: repeat(4,1fr); }
+.stat-card {
+background: var(–s1);
+border: 1px solid var(–bd);
+border-radius: 9px;
+padding: 14px;
+border-top-width: 2px;
+}
+.stat-num  { font-size: 26px; font-weight: 700; line-height: 1; margin-bottom: 4px; font-family: monospace; }
+.stat-lbl  { font-size: 11px; color: var(–tx3); }
+.stat-note { font-size: 10px; margin-top: 3px; font-family: monospace; }
+
+/* ── CARD ── */
+.card { background: var(–s1); border: 1px solid var(–bd); border-radius: 9px; overflow: hidden; margin-bottom: 14px; }
+.card-head { display: flex; align-items: center; gap: 11px; padding: 11px 15px; border-bottom: 1px solid var(–bd); background: rgba(0,0,0,.2); }
+.card-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.card-title { font-size: 12px; font-weight: 600; }
+.card-sub   { font-size: 10px; color: var(–tx3); margin-top: 1px; font-family: monospace; }
+.card-body  { padding: 15px; }
+
+/* ── INFO BAR ── */
+.info-bar {
+border-radius: 7px;
+padding: 12px 16px;
+font-size: 11px;
+line-height: 1.9;
+margin-bottom: 15px;
+font-family: monospace;
+border: 1px solid;
+}
+.ib-cy  { background: rgba(6,182,212,.05);   border-color: rgba(6,182,212,.22);   color: var(–tx2); }
+.ib-gn  { background: rgba(5,150,105,.05);   border-color: rgba(5,150,105,.22);   color: var(–tx2); }
+.ib-or  { background: rgba(217,119,6,.05);   border-color: rgba(217,119,6,.22);   color: var(–tx2); }
+.ib-pk  { background: rgba(219,39,119,.05);  border-color: rgba(219,39,119,.22);  color: var(–tx2); }
+.ib-gd  { background: rgba(202,138,4,.05);   border-color: rgba(202,138,4,.22);   color: var(–tx2); }
+.ib-pu  { background: rgba(124,58,237,.05);  border-color: rgba(124,58,237,.22);  color: var(–tx2); }
+.ib-lm  { background: rgba(101,163,13,.05);  border-color: rgba(101,163,13,.22);  color: var(–tx2); }
+.ib-rd  { background: rgba(220,38,38,.05);   border-color: rgba(220,38,38,.22);   color: var(–tx2); }
+.ib-label { font-weight: 700; }
+
+/* ── GRIDS ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 9px; }
+
+/* ── CODE BLOCK ── */
+.code-block { background: var(–bg); border: 1px solid var(–bd); border-radius: 7px; overflow: hidden; margin-bottom: 14px; }
+.code-header {
+display: flex;
+align-items: center;
+gap: 7px;
+padding: 8px 13px;
+background: var(–s2);
+border-bottom: 1px solid var(–bd);
+font-size: 10px;
+color: var(–tx3);
+font-family: monospace;
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.dot-r { background: #ef4444; }
+.dot-y { background: #f59e0b; }
+.dot-g { background: #10b981; }
+.code-block pre {
+padding: 14px 16px;
+font-family: ‘Cascadia Code’,‘Fira Code’,‘Consolas’,monospace;
+font-size: 10.5px;
+line-height: 1.85;
+overflow-x: auto;
+white-space: pre;
+color: #607d94;
+margin: 0;
 }
 
-.sidebar{
-width:240px;
-background:var(--panel);
-border-right:1px solid var(--border);
-padding:12px;
-overflow:auto;
+/* ── TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+padding: 8px 12px;
+text-align: left;
+font-size: 9px;
+letter-spacing: 1.5px;
+text-transform: uppercase;
+color: var(–tx3);
+background: var(–s2);
+border-bottom: 1px solid var(–b2);
+font-family: monospace;
+}
+.data-table td { padding: 9px 12px; font-size: 11px; border-bottom: 1px solid var(–bd); vertical-align: top; }
+.data-table tr:hover td { background: rgba(6,182,212,.02); }
+
+/* ── TAGS ── */
+.tag {
+display: inline-block;
+padding: 2px 7px;
+border-radius: 4px;
+font-size: 9px;
+font-weight: 600;
+letter-spacing: .3px;
+font-family: monospace;
+}
+.tag-cy  { background: rgba(6,182,212,.1);  border: 1px solid rgba(6,182,212,.3);  color: var(–cy2);  }
+.tag-gn  { background: rgba(5,150,105,.1);  border: 1px solid rgba(5,150,105,.3);  color: var(–gn2);  }
+.tag-or  { background: rgba(217,119,6,.1);  border: 1px solid rgba(217,119,6,.3);  color: var(–or2);  }
+.tag-rd  { background: rgba(220,38,38,.1);  border: 1px solid rgba(220,38,38,.3);  color: var(–rd2);  }
+.tag-pu  { background: rgba(124,58,237,.1); border: 1px solid rgba(124,58,237,.3); color: var(–pu2);  }
+.tag-gd  { background: rgba(202,138,4,.1);  border: 1px solid rgba(202,138,4,.3);  color: var(–gd2);  }
+.tag-bl  { background: rgba(0,82,204,.15);  border: 1px solid rgba(0,82,204,.4);   color: #60a5fa; }
+.tag-pk  { background: rgba(219,39,119,.1); border: 1px solid rgba(219,39,119,.3); color: var(–pk2);  }
+.tag-lm  { background: rgba(101,163,13,.1); border: 1px solid rgba(101,163,13,.3); color: var(–lm2);  }
+
+/* text colors */
+.cy  { color: var(–cy2);  }
+.gn  { color: var(–gn2);  }
+.rd  { color: var(–rd2);  }
+.or  { color: var(–or2);  }
+.gd  { color: var(–gd2);  }
+.pu  { color: var(–pu2);  }
+.pk  { color: var(–pk2);  }
+.lm  { color: var(–lm2);  }
+.dim { color: var(–tx3);  }
+.m   { font-family: monospace; font-size: 10px; }
+
+/* ── STEP ROW ── */
+.step-row {
+display: flex;
+align-items: flex-start;
+gap: 11px;
+padding: 9px 13px;
+background: var(–s2);
+border: 1px solid var(–bd);
+border-radius: 7px;
+margin-bottom: 5px;
+}
+.step-num {
+width: 23px; height: 23px;
+border-radius: 5px;
+background: var(–s3);
+border: 1px solid var(–b2);
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 10px;
+font-weight: 600;
+color: var(–cy);
+flex-shrink: 0;
+font-family: monospace;
+}
+.step-label { font-size: 11px; font-weight: 600; font-family: monospace; flex: 1; }
+.step-desc  { font-size: 10px; color: var(–tx3); margin-top: 2px; }
+.step-tag   { margin-left: auto; flex-shrink: 0; align-self: flex-start; margin-top: 2px; }
+
+/* ── PRINCIPLE CARD ── */
+.principle {
+background: var(–s2);
+border: 1px solid var(–bd);
+border-radius: 8px;
+padding: 13px;
+}
+.principle-num  { font-size: 22px; font-weight: 700; font-family: monospace; color: var(–cy2); line-height: 1; }
+.principle-title { font-size: 12px; font-weight: 700; margin: 4px 0 3px; }
+.principle-desc  { font-size: 11px; color: var(–tx3); line-height: 1.5; }
+
+/* ── PROBLEM AREA ── */
+.problem-area {
+background: var(–s2);
+border: 1px solid var(–bd);
+border-radius: 8px;
+padding: 14px;
+display: flex;
+gap: 13px;
+align-items: flex-start;
+margin-bottom: 8px;
+}
+.pa-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
+.pa-title { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+.pa-desc  { font-size: 11px; color: var(–tx2); line-height: 1.6; }
+.pa-tags  { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+
+/* ── SOLUTION CARD ── */
+.solution-card {
+background: var(–s2);
+border: 1px solid var(–bd);
+border-left: 3px solid var(–gn2);
+border-radius: 8px;
+padding: 13px;
+}
+.sc-head { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; }
+.sc-icon { font-size: 18px; }
+.sc-title { font-size: 12px; font-weight: 700; color: var(–gn2); }
+.sc-desc  { font-size: 11px; color: var(–tx2); line-height: 1.6; }
+
+/* ── TABS ── */
+.tab-strip {
+display: flex;
+gap: 4px;
+background: var(–s1);
+border: 1px solid var(–bd);
+border-radius: 8px;
+padding: 4px;
+margin-bottom: 18px;
+flex-wrap: wrap;
+}
+.tab-btn {
+padding: 7px 13px;
+border-radius: 6px;
+border: 1px solid transparent;
+background: transparent;
+color: var(–tx2);
+font-size: 10px;
+font-weight: 600;
+cursor: pointer;
+letter-spacing: .5px;
+font-family: monospace;
+transition: all .14s;
+white-space: nowrap;
+}
+.tab-btn:hover { color: var(–tx); }
+.tab-btn.active { background: var(–s2); color: var(–cy); border-color: var(–b2); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── MIGRATION STEP ── */
+.mig-step {
+background: var(–s2);
+border: 1px solid var(–bd);
+border-radius: 8px;
+padding: 13px 15px;
+margin-bottom: 8px;
+display: flex;
+gap: 13px;
+align-items: flex-start;
+}
+.mig-num {
+width: 28px; height: 28px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 11px;
+font-weight: 700;
+flex-shrink: 0;
+font-family: monospace;
+}
+.mig-title { font-size: 12px; font-weight: 600; margin-bottom: 3px; }
+.mig-desc  { font-size: 11px; color: var(–tx2); line-height: 1.6; }
+
+/* ── CIRCUIT BREAKER STATES ── */
+.cb-state {
+border-radius: 7px;
+padding: 11px 14px;
+display: flex;
+align-items: center;
+gap: 11px;
+font-family: monospace;
+font-size: 11px;
+}
+.cb-closed { background: rgba(5,150,105,.08);  border: 1px solid rgba(5,150,105,.3); }
+.cb-open   { background: rgba(220,38,38,.08);  border: 1px solid rgba(220,38,38,.3); }
+.cb-half   { background: rgba(217,119,6,.08);  border: 1px solid rgba(217,119,6,.3); }
+
+/* ── WATERMARK TIMELINE ── */
+.wm-timeline { display: flex; align-items: center; overflow-x: auto; padding-bottom: 6px; margin-bottom: 16px; }
+.wm-node {
+background: var(–s3);
+border: 1px solid var(–b2);
+border-radius: 6px;
+padding: 7px 11px;
+font-size: 10px;
+text-align: center;
+min-width: 105px;
+flex-shrink: 0;
+font-family: monospace;
+line-height: 1.6;
+}
+.wm-arrow {
+width: 28px;
+height: 1px;
+background: var(–b2);
+flex-shrink: 0;
+position: relative;
+}
+.wm-arrow::after {
+content: ‘▶’;
+position: absolute;
+right: -8px;
+top: -7px;
+color: var(–b3);
+font-size: 13px;
 }
 
-.logo{
-font-size:14px;
-font-weight:600;
-margin-bottom:16px;
-}
+/* ── PROGRESS BAR ── */
+.prog-wrap { background: var(–s3); border-radius: 3px; height: 5px; overflow: hidden; margin-top: 4px; }
+.prog-bar  { height: 100%; border-radius: 3px; }
 
-.nav-item{
-padding:8px;
-cursor:pointer;
-border-radius:4px;
-margin-bottom:4px;
-color:var(--muted);
+/* ── CHECKLIST ── */
+.checklist-item {
+display: flex;
+align-items: center;
+gap: 9px;
+padding: 7px 11px;
+background: var(–s2);
+border: 1px solid var(–bd);
+border-radius: 6px;
+margin-bottom: 5px;
+font-size: 11px;
 }
+.checklist-item input[type=“checkbox”] { width: 14px; height: 14px; cursor: pointer; flex-shrink: 0; }
 
-.nav-item:hover{
-background:var(--panel2);
-color:var(--text);
+/* ── MAPPING TABLE highlight ── */
+.unchanged { color: var(–gn2); }
+.changed   { color: var(–or2); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1100px) {
+.stats-6 { grid-template-columns: repeat(3,1fr); }
+.grid-2, .grid-3 { grid-template-columns: 1fr; }
 }
-
-.nav-item.active{
-background:rgba(6,182,212,.08);
-color:var(--accent);
+@media (max-width: 800px) {
+.sb { width: 220px; }
+.stats-6, .stats-4 { grid-template-columns: repeat(2,1fr); }
+.grid-5 { grid-template-columns: repeat(2,1fr); }
 }
-
-.main{
-flex:1;
-display:flex;
-flex-direction:column;
-}
-
-.topbar{
-padding:14px;
-border-bottom:1px solid var(--border);
-background:var(--panel);
-}
-
-.title{
-font-size:16px;
-font-weight:600;
-}
-
-.content{
-padding:18px;
-overflow:auto;
-}
-
-.card{
-background:var(--panel);
-border:1px solid var(--border);
-border-radius:6px;
-margin-bottom:14px;
-}
-
-.card-header{
-padding:10px 12px;
-border-bottom:1px solid var(--border);
-font-weight:600;
-}
-
-.card-body{
-padding:12px;
-}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-gap:12px;
-}
-
-.stat{
-background:var(--panel);
-border:1px solid var(--border);
-padding:12px;
-border-radius:6px;
-}
-
-.stat-num{
-font-size:20px;
-font-weight:600;
-}
-
-.code{
-background:#020617;
-border:1px solid var(--border);
-padding:12px;
-border-radius:6px;
-font-family:monospace;
-font-size:12px;
-overflow:auto;
-white-space:pre;
-}
-
 </style>
 
 </head>
-
 <body>
+<div class="shell">
 
-<div class="app">
+<!-- ════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════ -->
 
-<div class="sidebar" id="sidebar"></div>
+<aside class="sb">
+  <div class="logo">
+    <div class="logo-badge">EDF v6.0</div>
+    <div class="logo-title">Enterprise Data<br>Framework</div>
+    <div class="logo-sub">Military Grade · Complete · v6</div>
+  </div>
+  <nav>
+    <div class="nav-group">
+      <div class="nav-label">Framework</div>
+      <div class="nav-item active" data-page="index"><span class="nav-ic">🏠</span>Master Index<span class="nav-badge nb4">HOME</span></div>
+      <div class="nav-item" data-page="problem"><span class="nav-ic">🎯</span>Problem Statement<span class="nav-badge nb6">WHY EDF</span></div>
+      <div class="nav-item" data-page="arch"><span class="nav-ic">🏗</span>Architecture<span class="nav-badge nb4">FULL</span></div>
+      <div class="nav-item" data-page="oracle"><span class="nav-ic">🗄</span>Oracle Schema<span class="nav-badge nb4">20 tbls</span></div>
+      <div class="nav-item" data-page="pipeline"><span class="nav-ic">⚙️</span>Pipeline Runner<span class="nav-badge nb6">v6</span></div>
+      <div class="nav-item" data-page="audit"><span class="nav-ic">📋</span>Audit Columns<span class="nav-badge nb4">26</span></div>
+      <div class="nav-item" data-page="sources"><span class="nav-ic">🔌</span>Multi-Source<span class="nav-badge nb4">10+</span></div>
+      <div class="nav-item" data-page="builder"><span class="nav-ic">🛠</span>Pipeline Builder<span class="nav-badge nb4">AUTO</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">v4 Modules</div>
+      <div class="nav-item" data-page="dq"><span class="nav-ic">✅</span>DQ Engine<span class="nav-badge nb4">10 rules</span></div>
+      <div class="nav-item" data-page="email"><span class="nav-ic">📧</span>Email + Attachments<span class="nav-badge nb4">3 formats</span></div>
+      <div class="nav-item" data-page="sla"><span class="nav-ic">⏱</span>SLA Monitor<span class="nav-badge nb4">PREDICT</span></div>
+      <div class="nav-item" data-page="errors"><span class="nav-ic">🚨</span>Error Logging<span class="nav-badge nb4">P1–P5</span></div>
+      <div class="nav-item" data-page="api"><span class="nav-ic">🌐</span>REST API<span class="nav-badge nb4">POS 1+3</span></div>
+      <div class="nav-item" data-page="shell"><span class="nav-ic">💻</span>Shell Scripts<span class="nav-badge nb4">18 cmds</span></div>
+      <div class="nav-item" data-page="cloud"><span class="nav-ic">☁️</span>Cloud Portability<span class="nav-badge nb4">4 envs</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">v5 Modules</div>
+      <div class="nav-item" data-page="profiling"><span class="nav-ic">🔬</span>Data Profiling<span class="nav-badge nb5">FULL</span></div>
+      <div class="nav-item" data-page="masking"><span class="nav-ic">🎭</span>Masking + PII<span class="nav-badge nb5">9 strats</span></div>
+      <div class="nav-item" data-page="recon"><span class="nav-ic">⚖️</span>Reconciliation<span class="nav-badge nb5">5 types</span></div>
+      <div class="nav-item" data-page="cost"><span class="nav-ic">💰</span>Cost Tracking<span class="nav-badge nb5">4 envs</span></div>
+      <div class="nav-item" data-page="encrypt"><span class="nav-ic">🔐</span>Row-Level Encryption<span class="nav-badge nb5">AES-256</span></div>
+      <div class="nav-item" data-page="testing"><span class="nav-ic">🧪</span>Test Framework<span class="nav-badge nb5">10 types</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">v6 New</div>
+      <div class="nav-item" data-page="circuit"><span class="nav-ic">⚡</span>Circuit Breaker<span class="nav-badge nb6">NEW</span></div>
+      <div class="nav-item" data-page="watermark"><span class="nav-ic">💧</span>Watermark/Incremental<span class="nav-badge nb6">NEW</span></div>
+      <div class="nav-item" data-page="schevo"><span class="nav-ic">🔄</span>Schema Evolution<span class="nav-badge nb6">NEW</span></div>
+      <div class="nav-item" data-page="dlq"><span class="nav-ic">📬</span>Dead Letter Queue<span class="nav-badge nb6">NEW</span></div>
+      <div class="nav-item" data-page="contracts"><span class="nav-ic">📜</span>Data Contracts<span class="nav-badge nb6">NEW</span></div>
+      <div class="nav-item" data-page="observ"><span class="nav-ic">📡</span>Observability<span class="nav-badge nb6">NEW</span></div>
+      <div class="nav-item" data-page="tenancy"><span class="nav-ic">🏢</span>Multi-Tenancy<span class="nav-badge nb6">NEW</span></div>
+      <div class="nav-item" data-page="dag"><span class="nav-ic">🕸</span>DAG + Dependencies<span class="nav-badge nb6">NEW</span></div>
+      <div class="nav-item" data-page="versioning"><span class="nav-ic">📦</span>Pipeline Versioning<span class="nav-badge nb6">NEW</span></div>
+      <div class="nav-item" data-page="alerting"><span class="nav-ic">🔔</span>Alert Channels<span class="nav-badge nb6">NEW</span></div>
+      <div class="nav-item" data-page="regulatory"><span class="nav-ic">📑</span>Regulatory Reports<span class="nav-badge nb6">NEW</span></div>
+      <div class="nav-item" data-page="health"><span class="nav-ic">💚</span>Health Check API<span class="nav-badge nb6">NEW</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Scheduler</div>
+      <div class="nav-item" data-page="scheduler"><span class="nav-ic">⏰</span>Autosys + Airflow<span class="nav-badge nb6">DUAL</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Migration</div>
+      <div class="nav-item" data-page="migration"><span class="nav-ic">🚀</span>Migration Toolkit<span class="nav-badge nb6">COMPLETE</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Operations</div>
+      <div class="nav-item" data-page="ops"><span class="nav-ic">📊</span>Ops Dashboard<span class="nav-badge nb4">LIVE</span></div>
+    </div>
+  </nav>
+</aside>
+
+<!-- ════════════════════════════════════════
+     MAIN
+════════════════════════════════════════ -->
 
 <div class="main">
+  <div class="topbar">
+    <div class="tb-info">
+      <div class="tb-title" id="topbar-title">Master Index</div>
+      <div class="tb-path"  id="topbar-path">EDF v6 / Framework / Master Index</div>
+    </div>
+    <div class="tb-spacer"></div>
+    <div class="pills">
+      <div class="pill pill-ok">ORACLE LIVE</div>
+      <div class="pill pill-ok">SPARK ONLINE</div>
+      <div class="pill pill-info">v6 · COMPLETE</div>
+    </div>
+  </div>
 
-<div class="topbar">
+  <div class="content-area">
 
-<div class="title" id="title">
-EDF v6 - Master Index
+<!-- ════════ PAGE: INDEX ════════ -->
+
+<div class="page active" id="page-index">
+  <div class="eyebrow">EDF v6 — NOTHING OMITTED · MILITARY GRADE · COMPLETE PACKAGE</div>
+  <div class="page-title">Enterprise Data Framework — Command Center</div>
+
+  <div class="stats stats-6" style="margin-bottom:20px;">
+    <div class="stat-card" style="border-top-color:var(--cy)">
+      <div class="stat-num cy">42</div>
+      <div class="stat-lbl">Total Modules</div>
+      <div class="stat-note cy">v4+v5+v6 complete</div>
+    </div>
+    <div class="stat-card" style="border-top-color:var(--gn2)">
+      <div class="stat-num gn">20</div>
+      <div class="stat-lbl">Oracle Config Tables</div>
+      <div class="stat-note gn">Single source of truth</div>
+    </div>
+    <div class="stat-card" style="border-top-color:var(--gd2)">
+      <div class="stat-num gd">26</div>
+      <div class="stat-lbl">Audit Columns</div>
+      <div class="stat-note gd">Every table, every zone</div>
+    </div>
+    <div class="stat-card" style="border-top-color:var(--or2)">
+      <div class="stat-num or">14</div>
+      <div class="stat-lbl">Runner Steps</div>
+      <div class="stat-note or">Zero BL code in runner</div>
+    </div>
+    <div class="stat-card" style="border-top-color:var(--pk2)">
+      <div class="stat-num pk">2</div>
+      <div class="stat-lbl">Schedulers</div>
+      <div class="stat-note pk">Autosys + Airflow</div>
+    </div>
+    <div class="stat-card" style="border-top-color:var(--lm2)">
+      <div class="stat-num lm">3</div>
+      <div class="stat-lbl">Migration Paths</div>
+      <div class="stat-note lm">Existing→EDF→Databricks</div>
+    </div>
+  </div>
+
+  <!-- 14-step runner -->
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon" style="background:rgba(6,182,212,.1);color:var(--cy)">⚙️</div>
+      <div>
+        <div class="card-title">14-Step Execution Spine — Zero Business Logic Code in Runner</div>
+        <div class="card-sub">Oracle is the program · Spark is the executor · Every module plugs in at a specific step</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="grid-2">
+        <div>
+          <div class="step-row"><div class="step-num">1</div><div><div class="step-label">Load all config from Oracle</div><div class="step-desc">PIPELINE_REGISTRY · TRANSFORM_STEPS · DQ_RULES · ENV · CIRCUIT_BREAKER</div></div><span class="step-tag tag tag-bl">v4</span></div>
+          <div class="step-row"><div class="step-num">2</div><div><div class="step-label">Test suite pre-check (TEST mode)</div><div class="step-desc">TEST_CASE_CONFIG · blocks deploy on failure · golden dataset validation</div></div><span class="step-tag tag tag-lm">v5</span></div>
+          <div class="step-row"><div class="step-num">3</div><div><div class="step-label">Increment watermark · load new rows</div><div class="step-desc">WATERMARK_STATE · HWM per source · full OR incremental mode</div></div><span class="step-tag tag tag-pk">v6</span></div>
+          <div class="step-row"><div class="step-num">4</div><div><div class="step-label">Load all sources (multi-source)</div><div class="step-desc">SOURCE_CONFIG · 10 connectors · JOIN_CONFIG · Vault auth</div></div><span class="step-tag tag tag-bl">v4</span></div>
+          <div class="step-row"><div class="step-num">5</div><div><div class="step-label">Profile RAW zone (async)</div><div class="step-desc">DataProfiler · 18 metrics/col · drift · anomaly · pattern detection</div></div><span class="step-tag tag tag-pu">v5</span></div>
+          <div class="step-row"><div class="step-num">6</div><div><div class="step-label">Execute TRANSFORM_STEPS — ALL BL from Oracle</div><div class="step-desc">8 primitives: FILTER·DERIVE·JOIN·AGG·DECODE·DEDUP·SCD2·PIVOT</div></div><span class="step-tag tag tag-bl">v4</span></div>
+          <div class="step-row"><div class="step-num">7</div><div><div class="step-label">Run DQ gates per step</div><div class="step-desc">DQEngine · 10 rule types · quarantine → DLQ · abort · warn</div></div><span class="step-tag tag tag-bl">v4</span></div>
+        </div>
+        <div>
+          <div class="step-row"><div class="step-num">8</div><div><div class="step-label">Apply PII masking before write</div><div class="step-desc">MaskingEngine · 9 strategies · TOKENISE · HASH · REDACT · FPE</div></div><span class="step-tag tag tag-pu">v5</span></div>
+          <div class="step-row"><div class="step-num">9</div><div><div class="step-label">Reconcile source vs output</div><div class="step-desc">ReconEngine · ROW_COUNT · SUM_CONTROL · HASH_SAMPLE · ZONE_WATERFALL</div></div><span class="step-tag tag tag-pu">v5</span></div>
+          <div class="step-row"><div class="step-num">10</div><div><div class="step-label">Inject 26 audit columns (mandatory)</div><div class="step-desc">AuditInjector · SRC+LOAD+PROC+SYS groups · cannot be bypassed</div></div><span class="step-tag tag tag-bl">v4</span></div>
+          <div class="step-row"><div class="step-num">11</div><div><div class="step-label">Configure Parquet encryption + write</div><div class="step-desc">AES-256-GCM · Vault key refs · column-level PME · key rotation</div></div><span class="step-tag tag tag-pu">v5</span></div>
+          <div class="step-row"><div class="step-num">12</div><div><div class="step-label">Profile CURATED+GOLD · detect drift</div><div class="step-desc">7 drift metrics · anomaly scoring · PROFILE_DRIFT_LOG → alert</div></div><span class="step-tag tag tag-pu">v5</span></div>
+          <div class="step-row"><div class="step-num">13</div><div><div class="step-label">Track cost · refresh Oracle API cache</div><div class="step-desc">CostTracker · PIPELINE_COST_LOG · API_CACHE refresh in Oracle</div></div><span class="step-tag tag tag-pu">v5</span></div>
+          <div class="step-row"><div class="step-num">14</div><div><div class="step-label">Audit + lineage + emails</div><div class="step-desc">AUDIT_LOG · LINEAGE_MAP · XLSX+PDF+CSV · 8 trigger events · 4 channels</div></div><span class="step-tag tag tag-bl">v4</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10 principles -->
+
+  <div class="eyebrow" style="margin-bottom:10px;">10 NON-NEGOTIABLE DESIGN PRINCIPLES</div>
+  <div class="grid-5" style="margin-bottom:20px;">
+    <div class="principle"><div class="principle-num">01</div><div class="principle-title">Config is code</div><div class="principle-desc">Every behavior is an Oracle row. Zero BL in Python.</div></div>
+    <div class="principle"><div class="principle-num">02</div><div class="principle-title">Audit is mandatory</div><div class="principle-desc">26 cols auto-injected. No pipeline skips them. Ever.</div></div>
+    <div class="principle"><div class="principle-num">03</div><div class="principle-title">Lineage is automatic</div><div class="principle-desc">Column-level. Runner writes it. Zero manual effort.</div></div>
+    <div class="principle"><div class="principle-num">04</div><div class="principle-title">DQ is structural</div><div class="principle-desc">Wired into every step. Not an afterthought.</div></div>
+    <div class="principle"><div class="principle-num">05</div><div class="principle-title">PII is first-class</div><div class="principle-desc">Masking before write. Profiler auto-detects new PII.</div></div>
+    <div class="principle"><div class="principle-num">06</div><div class="principle-title">Cloud is a config row</div><div class="principle-desc">2 SQL stmts = full migration. Zero code change.</div></div>
+    <div class="principle"><div class="principle-num">07</div><div class="principle-title">Failures are structured</div><div class="principle-desc">P1–P5 · circuit breaker · DLQ · retry. Nothing lost.</div></div>
+    <div class="principle"><div class="principle-num">08</div><div class="principle-title">Tests block deployment</div><div class="principle-desc">Golden dataset tests must pass before go-live.</div></div>
+    <div class="principle"><div class="principle-num">09</div><div class="principle-title">Cost is observable</div><div class="principle-desc">Every run has a cost. Per-row efficiency KPI.</div></div>
+    <div class="principle"><div class="principle-num">10</div><div class="principle-title">Oracle is pos 1 and 3</div><div class="principle-desc">Config store AND materialized API cache.</div></div>
+  </div>
+
+  <div class="info-bar ib-gn">
+    <span class="ib-label" style="color:var(--gn2)">NEW IN v6: </span>
+    Autosys + Airflow dual scheduler · Problem Statement view · Complete migration toolkit · 12 previously missing modules. Use the sidebar to navigate all 42 modules.
+  </div>
 </div>
 
+<!-- ════════ PAGE: PROBLEM STATEMENT ════════ -->
+
+<div class="page" id="page-problem">
+  <div class="eyebrow">ETL MODERNISATION INITIATIVE — PROBLEM STATEMENT</div>
+  <div class="page-title">Why EDF v6 Exists — The Problem and the Solution</div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-head">
+      <div class="card-icon" style="background:rgba(220,38,38,.1);color:var(--rd2)">🎯</div>
+      <div><div class="card-title">One-Line Problem Statement</div></div>
+    </div>
+    <div class="card-body">
+      <div style="font-size:14px;font-weight:600;color:var(--tx);line-height:1.75;padding:6px 0;">
+        Transition from a code-driven Hadoop ETL ecosystem to a metadata-driven, governed and cloud-portable data platform
+        that reduces engineering effort, standardizes pipelines, embeds governance and enables seamless migration to
+        Databricks on AWS and GCP without rewriting existing pipelines.
+      </div>
+    </div>
+  </div>
+
+  <div class="eyebrow" style="margin-bottom:10px;">7 DETAILED PROBLEM AREAS</div>
+
+  <div class="problem-area">
+    <div class="pa-icon">🔴</div>
+    <div>
+      <div class="pa-title rd">High Dependency on Custom Code</div>
+      <div class="pa-desc">Shell scripts, PySpark transformations and manual configuration patterns increase effort to onboard new pipelines. Reusable logic is limited. Standardization is low. Change management requires engineering intervention.</div>
+      <div class="pa-tags"><span class="tag tag-rd">HIGH EFFORT</span><span class="tag tag-rd">NO REUSE</span><span class="tag tag-rd">MANUAL</span></div>
+    </div>
+  </div>
+  <div class="problem-area">
+    <div class="pa-icon">🟠</div>
+    <div>
+      <div class="pa-title or">Fragmented Configuration Management</div>
+      <div class="pa-desc">Pipeline config resides in Oracle tables but transformation logic exists in PySpark code. Orchestration logic exists separately in Autosys JIL. This separation increases complexity in impact analysis and traceability.</div>
+      <div class="pa-tags"><span class="tag tag-or">FRAGMENTED</span><span class="tag tag-or">HARD TO TRACE</span><span class="tag tag-or">SPLIT TRUTH</span></div>
+    </div>
+  </div>
+  <div class="problem-area">
+    <div class="pa-icon">🟡</div>
+    <div>
+      <div class="pa-title gd">Limited Native Governance Capabilities</div>
+      <div class="pa-desc">Data lineage visibility is not automatically generated. Data profiling and quality validation are not standardized. Auditability across pipeline lifecycle is limited. Compliance readiness requires manual effort.</div>
+      <div class="pa-tags"><span class="tag tag-gd">NO AUTO-LINEAGE</span><span class="tag tag-gd">NO PROFILING</span><span class="tag tag-gd">MANUAL AUDIT</span></div>
+    </div>
+  </div>
+  <div class="problem-area">
+    <div class="pa-icon">🔵</div>
+    <div>
+      <div class="pa-title cy">Orchestration Overhead</div>
+      <div class="pa-desc">Autosys job definitions must be manually created and maintained. Dependency management is effort intensive. Restartability and monitoring require manual intervention.</div>
+      <div class="pa-tags"><span class="tag tag-cy">MANUAL JIL</span><span class="tag tag-cy">NO AUTO-DEPS</span><span class="tag tag-cy">MANUAL RESTART</span></div>
+    </div>
+  </div>
+  <div class="problem-area">
+    <div class="pa-icon">🟣</div>
+    <div>
+      <div class="pa-title pu">Scalability Constraints</div>
+      <div class="pa-desc">Onboarding new data sources requires additional scripting. Transformation reuse is limited. Schema evolution handling is inconsistent. Operational effort increases linearly with pipeline count.</div>
+      <div class="pa-tags"><span class="tag tag-pu">LINEAR EFFORT</span><span class="tag tag-pu">NO REUSE</span><span class="tag tag-pu">INCONSISTENT</span></div>
+    </div>
+  </div>
+  <div class="problem-area">
+    <div class="pa-icon">🔴</div>
+    <div>
+      <div class="pa-title rd">Cloud Migration Risk</div>
+      <div class="pa-desc">Existing pipelines are tightly coupled to Hive, Impala and on-prem Spark runtime. Migration to Databricks/AWS/GCP requires redesign of execution logic, storage format and orchestration. Lack of abstraction increases vendor lock-in risk.</div>
+      <div class="pa-tags"><span class="tag tag-rd">TIGHTLY COUPLED</span><span class="tag tag-rd">REDESIGN NEEDED</span><span class="tag tag-rd">VENDOR LOCK-IN</span></div>
+    </div>
+  </div>
+  <div class="problem-area">
+    <div class="pa-icon">🟠</div>
+    <div>
+      <div class="pa-title or">Lack of Unified Framework</div>
+      <div class="pa-desc">Different pipelines follow different patterns. No centralized metadata-driven control plane exists. No standardized pipeline lifecycle. Limited self-service capability for onboarding new datasets.</div>
+      <div class="pa-tags"><span class="tag tag-or">NO STANDARDS</span><span class="tag tag-or">NO CONTROL PLANE</span><span class="tag tag-or">NO SELF-SERVICE</span></div>
+    </div>
+  </div>
+
+  <div class="eyebrow" style="margin:20px 0 12px;">HOW EDF v6 SOLVES EACH PROBLEM</div>
+  <div class="grid-2" style="margin-bottom:20px;">
+    <div class="solution-card">
+      <div class="sc-head"><span class="sc-icon">🗄</span><span class="sc-title">Oracle as single config store</span></div>
+      <div class="sc-desc">All pipeline behavior defined in Oracle tables. Zero BL in code. Adding a pipeline = INSERT rows. Changing logic = UPDATE a step_sql value.</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-head"><span class="sc-icon">⚙️</span><span class="sc-title">Generic Spark runner</span></div>
+      <div class="sc-desc">One Python file handles every pipeline. Reads Oracle, executes steps, injects audit cols, writes encrypted Parquet. Zero pipeline-specific code.</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-head"><span class="sc-icon">📋</span><span class="sc-title">Auto audit + lineage</span></div>
+      <div class="sc-desc">26 audit columns injected before every write. Column-level lineage written by runner on every execution. Zero manual documentation.</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-head"><span class="sc-icon">✅</span><span class="sc-title">Native DQ + profiling</span></div>
+      <div class="sc-desc">10 DQ rule types wired into every step. Full column profiling (18 metrics) runs automatically. Drift detection vs 7-run rolling average.</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-head"><span class="sc-icon">⏰</span><span class="sc-title">Dual scheduler auto-gen</span></div>
+      <div class="sc-desc">Autosys JIL AND Airflow DAGs both generated from Oracle SCHEDULER_CONFIG. Dependency chains from DEPENDENCY_GRAPH. No manual JIL edits.</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-head"><span class="sc-icon">☁️</span><span class="sc-title">2-statement cloud migration</span></div>
+      <div class="sc-desc">ENVIRONMENT_CONFIG.active_flg = 2 SQL UPDATEs. TRANSFORM_STEPS SQL runs identically on any Spark platform. No pipeline redesign.</div>
+    </div>
+    <div class="solution-card">
+      <div class="sc-head"><span class="sc-icon">🚀</span><span class="sc-title">Full migration toolkit</span></div>
+      <div class="sc-desc">edf_migrate_audit.sh inventories existing jobs. PipelineMigrationConverter parses PySpark → suggests TRANSFORM_STEPS. jil_importer.py imports existing JIL.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon" style="background:rgba(5,150,105,.1);color:var(--gn2)">📊</div>
+      <div><div class="card-title">Problem → Solution Mapping</div></div>
+    </div>
+    <div class="card-body" style="padding:0;">
+      <table class="data-table">
+        <thead>
+          <tr><th>PROBLEM AREA</th><th>CURRENT STATE</th><th>EDF v6 SOLUTION</th><th>MODULE</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="rd">Custom code dependency</td><td class="dim">PySpark per pipeline</td><td class="gn">TRANSFORM_STEPS — SQL rows in Oracle</td><td class="cy">Pipeline Runner</td></tr>
+          <tr><td class="rd">Fragmented config</td><td class="dim">Code + Oracle + JIL split</td><td class="gn">Single Oracle schema — all config in one place</td><td class="cy">Oracle Schema</td></tr>
+          <tr><td class="rd">No auto lineage</td><td class="dim">Manual / missing</td><td class="gn">LINEAGE_MAP auto-written by runner every run</td><td class="cy">Audit + Lineage</td></tr>
+          <tr><td class="rd">No profiling</td><td class="dim">External tooling</td><td class="gn">DataProfiler runs async every zone every run</td><td class="cy">Data Profiling</td></tr>
+          <tr><td class="rd">No auto DQ</td><td class="dim">Ad-hoc checks</td><td class="gn">DQ_RULES table — 10 types, wired into every step</td><td class="cy">DQ Engine</td></tr>
+          <tr><td class="rd">Manual Autosys JIL</td><td class="dim">Hand-crafted JIL files</td><td class="gn">AutosysGenerator reads Oracle → emits JIL auto</td><td class="cy">Scheduler</td></tr>
+          <tr><td class="rd">No Airflow support</td><td class="dim">Not available</td><td class="gn">AirflowDAGGenerator reads Oracle → emits DAGs</td><td class="cy">Scheduler</td></tr>
+          <tr><td class="rd">Cloud redesign needed</td><td class="dim">Hive/Impala coupled</td><td class="gn">ENVIRONMENT_CONFIG — 2 SQL stmts to migrate</td><td class="cy">Cloud Portability</td></tr>
+          <tr><td class="rd">No schema evolution</td><td class="dim">Manual ALTER scripts</td><td class="gn">SchemaEvolutionHandler — auto-ALTER or block</td><td class="cy">Schema Evolution</td></tr>
+          <tr><td class="rd">No self-service</td><td class="dim">Eng intervention needed</td><td class="gn">Pipeline Builder UI + Oracle INSERT auto-gen</td><td class="cy">Pipeline Builder</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
-<div class="content" id="content">
+<!-- ════════ PAGE: SCHEDULER ════════ -->
 
+<div class="page" id="page-scheduler">
+  <div class="eyebrow">EDF v6 — DUAL SCHEDULER SUPPORT</div>
+  <div class="page-title">Autosys + Airflow — Both Auto-Generated from Oracle SCHEDULER_CONFIG</div>
+
+  <div class="info-bar ib-cy">
+    <span class="ib-label" style="color:var(--cy2)">ARCHITECTURE: </span>
+    SCHEDULER_CONFIG table in Oracle drives both schedulers. AutosysGenerator emits JIL. AirflowDAGGenerator emits Python DAG files. Both call the same edf_run.sh command. Switch scheduler_type = AUTOSYS | AIRFLOW | BOTH per pipeline.
+  </div>
+
+  <div class="tab-strip" id="sched-tabs">
+    <button class="tab-btn active" onclick="switchTab('sched','autosys',this)">🏭 Autosys (JIL)</button>
+    <button class="tab-btn" onclick="switchTab('sched','airflow',this)">🌊 Airflow (DAG)</button>
+    <button class="tab-btn" onclick="switchTab('sched','ddl',this)">🗄 SCHEDULER_CONFIG DDL</button>
+    <button class="tab-btn" onclick="switchTab('sched','sync',this)">🔄 Sync Script</button>
+  </div>
+
+  <div id="sched-panel-autosys" class="tab-panel active">
+    <div class="code-block">
+      <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>&nbsp; autosys_generator.py — reads Oracle SCHEDULER_CONFIG, emits Autosys JIL</div>
+      <pre>class AutosysGenerator:
+    def generate_all(self, namespace_id=None):
+        pipelines = self.oracle.query("""
+            SELECT p.pipeline_id, p.pipeline_nm,
+                   s.start_time, s.autosys_box_nm,
+                   s.machine, s.owner,
+                   s.max_run_alarm, s.timezone, s.priority
+            FROM   PIPELINE_REGISTRY p
+            JOIN   SCHEDULER_CONFIG s ON s.pipeline_id=p.pipeline_id
+            WHERE  p.active_flg='Y'
+            AND    s.scheduler_type IN ('AUTOSYS','BOTH')
+            AND    (:ns IS NULL OR p.namespace_id=:ns)
+        """, ns=namespace_id)
+
+```
+    jil_blocks = []
+    for p in pipelines:
+        deps = self.oracle.get_dependencies(p.pipeline_id)
+        jil_blocks.append(self._make_jil(p, deps))
+    return "\n\n".join(jil_blocks)
+
+def _make_jil(self, p, deps):
+    condition = ""
+    if deps:
+        parts = [f"success({d.upstream_nm},+0)" for d in deps]
+        condition = "condition:       " + " AND ".join(parts)
+
+    return (
+        f"insert_job: {p.pipeline_nm}   job_type: cmd\n"
+        f"box_name:   {p.autosys_box_nm or 'EDF_DAILY_BOX'}\n"
+        f"command:    /opt/edf/bin/edf_run.sh -p {p.pipeline_id}"
+          f" -d %%date%% -m SCHEDULED\n"
+        f"machine:    {p.machine or 'edf-spark-host'}\n"
+        f"owner:      {p.owner}\n"
+        f"permission: gx,ge,wx,we,mx,me\n"
+        f"date_conditions: yes\n"
+        f"days_of_week:    all\n"
+        f"start_times:     \"{p.start_time or '06:00'}\"\n"
+        f"{condition}\n"
+        f"max_run_alarm:   {p.max_run_alarm or 120}\n"
+        f"timezone:        {p.timezone or 'Europe/London'}\n"
+        f"priority:        {p.priority or 50}\n"
+        f"alarm_if_fail:   1\n"
+    )</pre>
+</div>
+```
+
+  </div>
+
+  <div id="sched-panel-airflow" class="tab-panel">
+    <div class="code-block">
+      <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>&nbsp; airflow_dag_generator.py — reads Oracle, emits Python DAG files</div>
+      <pre>class AirflowDAGGenerator:
+    def generate_dag_file(self, namespace_id):
+        pipelines = self.oracle.get_active_pipelines(namespace_id)
+        deps      = self.oracle.get_all_deps(namespace_id)
+        ns_nm     = self.oracle.get_ns_name(namespace_id)
+
+```
+    lines = []
+    lines.append("from airflow import DAG")
+    lines.append("from airflow.operators.bash import BashOperator")
+    lines.append("from airflow.utils.dates import days_ago")
+    lines.append("from datetime import timedelta")
+    lines.append("")
+    lines.append("default_args = {")
+    lines.append("    'owner': 'edf-framework',")
+    lines.append("    'depends_on_past': False,")
+    lines.append("    'email_on_failure': False,  # EDF handles alerts")
+    lines.append("    'retries': 0,               # Circuit breaker handles")
+    lines.append("}")
+    lines.append("")
+    lines.append("dag = DAG(")
+    lines.append(f"    'edf_{ns_nm}_daily',")
+    lines.append("    default_args=default_args,")
+    lines.append("    schedule_interval='@daily',")
+    lines.append("    start_date=days_ago(1),")
+    lines.append("    catchup=False,")
+    lines.append(f"    tags=['edf', 'auto-generated', '{ns_nm}'],")
+    lines.append(")")
+    lines.append("")
+
+    for p in pipelines:
+        lines.append(f"t_{p.pipeline_id} = BashOperator(")
+        lines.append(f"    task_id='{p.pipeline_nm}',")
+        lines.append(f"    bash_command=(")
+        lines.append(f"        '/opt/edf/bin/edf_run.sh '")
+        lines.append(f"        '-p {p.pipeline_id} '")
+        lines.append( "        '-d {{ ds }} -m SCHEDULED'")
+        lines.append( "    ),")
+        lines.append( "    dag=dag,")
+        lines.append( ")")
+
+    for d in deps:
+        lines.append(f"t_{d.upstream_id} >> t_{d.downstream_id}")
+
+    return "\n".join(lines)</pre>
+</div>
+```
+
+  </div>
+
+  <div id="sched-panel-ddl" class="tab-panel">
+    <div class="code-block">
+      <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>&nbsp; SCHEDULER_CONFIG Oracle DDL</div>
+      <pre>CREATE TABLE SCHEDULER_CONFIG (
+  sched_id         NUMBER(10)    PRIMARY KEY,
+  pipeline_id      NUMBER(10)    NOT NULL REFERENCES PIPELINE_REGISTRY,
+  scheduler_type   VARCHAR2(20)  NOT NULL, -- AUTOSYS / AIRFLOW / BOTH
+  cron_expression  VARCHAR2(100),          -- Airflow: "0 6 * * *"
+  start_time       VARCHAR2(10),           -- Autosys: HH:MM e.g. "06:00"
+  timezone         VARCHAR2(50)  DEFAULT 'Europe/London',
+  autosys_box_nm   VARCHAR2(100),          -- Autosys job box/group
+  machine          VARCHAR2(200),          -- Autosys execution host
+  priority         NUMBER(3)     DEFAULT 50,
+  max_run_alarm    NUMBER(5),              -- Autosys: alert after N mins
+  airflow_pool     VARCHAR2(100),          -- Airflow worker pool
+  airflow_queue    VARCHAR2(100),          -- Airflow worker queue
+  active_flg       CHAR(1)       DEFAULT 'Y',
+  last_generated_ts TIMESTAMP
+);
+
+– Add a new pipeline to both schedulers:
+INSERT INTO SCHEDULER_CONFIG
+(sched_id, pipeline_id, scheduler_type, start_time,
+autosys_box_nm, machine, max_run_alarm, timezone)
+VALUES
+(1001, 301, ‘BOTH’, ‘06:00’,
+‘EDF_FI_BOX’, ‘edf-spark-01’, 120, ‘Europe/London’);
+
+– Then run: edf_scheduler_sync.sh
+– Both Autosys JIL and Airflow DAG updated automatically.</pre>
 </div>
 
+  </div>
+
+  <div id="sched-panel-sync" class="tab-panel">
+    <div class="code-block">
+      <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>&nbsp; edf_scheduler_sync.sh — deploys both schedulers from Oracle config</div>
+      <pre>#!/usr/bin/env bash
+# Generates + deploys both Autosys JIL and Airflow DAGs from Oracle
+# Run after any SCHEDULER_CONFIG change
+set -euo pipefail
+source "${EDF_HOME}/conf/edf.env"
+
+log “INFO” “Starting scheduler sync from Oracle SCHEDULER_CONFIG”
+
+# 1. Generate Autosys JIL for all active pipelines
+
+python3 “${EDF_HOME}/scheduler/autosys_generator.py”   
+–namespace all   
+–output /tmp/edf_jobs.jil
+
+# 2. Import into Autosys (requires autosys credentials)
+
+jil < /tmp/edf_jobs.jil
+log “OK” “Autosys JIL imported ($(wc -l < /tmp/edf_jobs.jil) lines)”
+
+# 3. Generate Airflow DAG Python files
+
+python3 “${EDF_HOME}/scheduler/airflow_dag_generator.py”   
+–namespace all   
+–output “${AIRFLOW_DAGS_PATH}/edf_generated/”
+log “OK” “Airflow DAGs written to ${AIRFLOW_DAGS_PATH}/edf_generated/”
+
+# 4. Stamp generation timestamp in Oracle
+
+sqlplus_exec “UPDATE SCHEDULER_CONFIG
+SET    last_generated_ts=SYSTIMESTAMP
+WHERE  active_flg=‘Y’”
+sqlplus_exec “COMMIT”
+
+log “OK” “Both schedulers synced from Oracle. Zero manual edits needed.”
+log “INFO” “To add a pipeline: INSERT into SCHEDULER_CONFIG, re-run this script.”</pre>
 </div>
 
+  </div>
+</div>
+
+<!-- ════════ PAGE: MIGRATION ════════ -->
+
+<div class="page" id="page-migration">
+  <div class="eyebrow">EDF v6 — COMPLETE MIGRATION TOOLKIT</div>
+  <div class="page-title">Three Migration Paths — Existing → EDF → Databricks</div>
+
+  <div class="info-bar ib-lm">
+    <span class="ib-label" style="color:var(--lm2)">THREE PATHS: </span>
+    (1) Existing PySpark/shell pipelines → EDF v6 · (2) Autosys JIL definitions → EDF SCHEDULER_CONFIG · (3) EDF on-prem → EDF on Databricks (2 SQL statements + data copy)
+  </div>
+
+  <div class="tab-strip" id="mig-tabs">
+    <button class="tab-btn active" onclick="switchTab('mig','existing',this)">🔄 Existing → EDF</button>
+    <button class="tab-btn" onclick="switchTab('mig','autosys',this)">⏰ Autosys → EDF</button>
+    <button class="tab-btn" onclick="switchTab('mig','databricks',this)">☁️ EDF → Databricks</button>
+    <button class="tab-btn" onclick="switchTab('mig','tools',this)">🛠 All Tools</button>
+    <button class="tab-btn" onclick="switchTab('mig','checklist',this)">✅ Full Checklist</button>
+  </div>
+
+  <!-- Existing → EDF -->
+
+  <div id="mig-panel-existing" class="tab-panel active">
+    <div class="mig-step">
+      <div class="mig-num" style="background:rgba(6,182,212,.15);color:var(--cy2)">01</div>
+      <div><div class="mig-title">Step 1: Audit all existing pipelines</div><div class="mig-desc">Run edf_migrate_audit.sh — scans HDFS, cron, Autosys, git. Outputs inventory CSV: job_name, schedule, source_path, target_path, estimated_steps.</div></div>
+    </div>
+    <div class="mig-step">
+      <div class="mig-num" style="background:rgba(6,182,212,.15);color:var(--cy2)">02</div>
+      <div><div class="mig-title">Step 2: Map each pipeline to EDF structure</div><div class="mig-desc">Create PIPELINE_REGISTRY row. Map source paths → SOURCE_CONFIG. Map target + write mode → TARGET_CONFIG.</div></div>
+    </div>
+    <div class="mig-step">
+      <div class="mig-num" style="background:rgba(6,182,212,.15);color:var(--cy2)">03</div>
+      <div><div class="mig-title">Step 3: Extract BL to TRANSFORM_STEPS</div><div class="mig-desc">Run PipelineMigrationConverter.analyse_spark_file() per job. Reviews .filter()/.withColumn()/.groupBy().agg() calls. Outputs INSERT SQL suggestions with confidence scores.</div></div>
+    </div>
+    <div class="mig-step">
+      <div class="mig-num" style="background:rgba(6,182,212,.15);color:var(--cy2)">04</div>
+      <div><div class="mig-title">Step 4: Register sources in SOURCE_CONFIG</div><div class="mig-desc">INSERT row per source: conn_string, source_type, auth_vault_key. Test via edf_test_connection.sh.</div></div>
+    </div>
+    <div class="mig-step">
+      <div class="mig-num" style="background:rgba(6,182,212,.15);color:var(--cy2)">05</div>
+      <div><div class="mig-title">Step 5: Add DQ rules</div><div class="mig-desc">INSERT DQ_RULES rows: NOT_NULL on PKs, RANGE on amounts, VOLUME_SPIKE on row counts. Set fail_action based on criticality.</div></div>
+    </div>
+    <div class="mig-step">
+      <div class="mig-num" style="background:rgba(6,182,212,.15);color:var(--cy2)">06</div>
+      <div><div class="mig-title">Step 6: Register with scheduler</div><div class="mig-desc">INSERT SCHEDULER_CONFIG row. Set scheduler_type=AUTOSYS or BOTH. Run edf_scheduler_sync.sh.</div></div>
+    </div>
+    <div class="mig-step">
+      <div class="mig-num" style="background:rgba(217,119,6,.15);color:var(--or2)">07</div>
+      <div><div class="mig-title">Step 7: Parallel validation (5 days)</div><div class="mig-desc">Set migration_mode=PARALLEL. Both old and new run side-by-side. Run edf_recon_compare.sh daily. Require 0% variance on control totals.</div></div>
+    </div>
+    <div class="mig-step">
+      <div class="mig-num" style="background:rgba(5,150,105,.15);color:var(--gn2)">08</div>
+      <div><div class="mig-title">Step 8: Cut over</div><div class="mig-desc">Disable old Autosys job. Set old active_flg=N. Monitor 2 days. Decommission old code.</div></div>
+    </div>
+    <div class="code-block">
+      <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>&nbsp; edf_migrate_convert.py — parses existing PySpark, suggests TRANSFORM_STEPS inserts</div>
+      <pre>class PipelineMigrationConverter:
+    """Semi-automated converter: parses existing PySpark code,
+    suggests TRANSFORM_STEPS rows. Human reviews before INSERT."""
+
+```
+def analyse_spark_file(self, filepath, pipeline_id):
+    with open(filepath) as f:
+        source = f.read()
+    tree = ast.parse(source)
+    suggestions = []
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            attr = getattr(node.func, 'attr', '')
+
+            if attr == 'filter':        # FILTER step
+                suggestions.append({
+                    'step_type': 'FILTER',
+                    'step_sql':  ast.unparse(node.args[0]),
+                    'confidence': 'HIGH'
+                })
+            elif attr == 'withColumn':   # DERIVE step
+                suggestions.append({
+                    'step_type':     'DERIVE',
+                    'step_sql':      ast.unparse(node.args[1]),
+                    'target_alias':  ast.unparse(node.args[0]).strip("'"),
+                    'confidence':    'HIGH'
+                })
+            elif attr == 'agg':          # AGGREGATE step
+                suggestions.append({
+                    'step_type':  'AGGREGATE',
+                    'step_sql':   'REVIEW_REQUIRED',
+                    'confidence': 'MEDIUM'
+                })
+
+    self._print_review_table(suggestions)
+    return self.generate_insert_sql(pipeline_id, suggestions)</pre>
+</div>
+```
+
+  </div>
+
+  <!-- Autosys → EDF -->
+
+  <div id="mig-panel-autosys" class="tab-panel">
+    <div class="info-bar ib-gd">
+      <span class="ib-label" style="color:var(--gd2)">GOAL: </span>
+      Import existing Autosys JIL definitions into EDF SCHEDULER_CONFIG + DEPENDENCY_GRAPH. EDF then owns scheduling and regenerates JIL from config. Existing job names preserved.
+    </div>
+    <div class="code-block">
+      <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>&nbsp; jil_importer.py — parses existing JIL into Oracle SCHEDULER_CONFIG + DEPENDENCY_GRAPH</div>
+      <pre>class JILImporter:
+    """Parses existing Autosys JIL files and populates:
+    - SCHEDULER_CONFIG (scheduling metadata)
+    - DEPENDENCY_GRAPH (job conditions -> upstream deps)
+    - PIPELINE_REGISTRY stubs for unregistered pipelines"""
+
+```
+def import_jil_file(self, jil_path):
+    jobs = self._parse_jil(jil_path)
+    for job in jobs:
+        pipeline_id = self._get_or_create_pipeline(job)
+        self._insert_scheduler_config(pipeline_id, job)
+        for dep in job.get('conditions', []):
+            upstream_id = self._get_pipeline_id(dep)
+            if upstream_id:
+                self._insert_dependency(upstream_id, pipeline_id)
+
+def _parse_jil(self, path):
+    jobs, cur = [], {}
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith('insert_job:'):
+                if cur: jobs.append(cur)
+                cur = {'name': line.split()[1], 'conditions': []}
+            elif line.startswith('start_times:'):
+                cur['start_time'] = line.split('"')[1]
+            elif line.startswith('condition:'):
+                import re
+                cur['conditions'] += re.findall(r'success\((\w+)', line)
+            elif line.startswith('machine:'):
+                cur['machine'] = line.split()[1]
+            elif line.startswith('max_run_alarm:'):
+                cur['max_run_alarm'] = int(line.split()[1])
+    if cur: jobs.append(cur)
+    return jobs
+```
+
+# Usage:
+
+# 1. Export current JIL:  autorep -J EDF_% -j > existing_jobs.jil
+
+# 2. Import:              python jil_importer.py –input existing_jobs.jil
+
+# 3. Verify Oracle rows in SCHEDULER_CONFIG + DEPENDENCY_GRAPH
+
+# 4. Run:                 edf_scheduler_sync.sh  (EDF now owns scheduling)
+
+# 5. All future JIL changes go via SCHEDULER_CONFIG — no manual JIL edits</pre>
+
+```
+</div>
+```
+
+  </div>
+
+  <!-- EDF → Databricks -->
+
+  <div id="mig-panel-databricks" class="tab-panel">
+    <div class="info-bar ib-gn">
+      <span class="ib-label" style="color:var(--gn2)">KEY INSIGHT: </span>
+      ALL business logic is in Oracle TRANSFORM_STEPS (pure Spark SQL). ALL paths are in ENVIRONMENT_CONFIG. Migration = 2 SQL UPDATEs + data copy. Zero pipeline redesign.
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-head"><div class="card-title">What Changes vs What Stays the Same</div></div>
+      <div class="card-body" style="padding:0;">
+        <table class="data-table">
+          <thead><tr><th>COMPONENT</th><th>ON-PREM</th><th>DATABRICKS</th><th>CHANGE?</th></tr></thead>
+          <tbody>
+            <tr><td class="m cy">TRANSFORM_STEPS</td><td class="dim">Oracle</td><td class="dim">Oracle</td><td class="unchanged">UNCHANGED</td></tr>
+            <tr><td class="m cy">DQ_RULES</td><td class="dim">Oracle</td><td class="dim">Oracle</td><td class="unchanged">UNCHANGED</td></tr>
+            <tr><td class="m cy">SCHEDULER_CONFIG</td><td class="dim">Oracle → Autosys</td><td class="dim">Oracle → Airflow/Workflows</td><td class="changed">Scheduler type only</td></tr>
+            <tr><td class="m cy">spark_runner.py</td><td class="dim">Spark 3.x YARN</td><td class="dim">Databricks Spark</td><td class="unchanged">UNCHANGED</td></tr>
+            <tr><td class="m cy">Storage paths</td><td class="dim">hdfs://...</td><td class="dim">dbfs:/ or s3a://</td><td class="changed">ENVIRONMENT_CONFIG row</td></tr>
+            <tr><td class="m cy">Metastore</td><td class="dim">Hive Metastore</td><td class="dim">Unity Catalog</td><td class="changed">Config row only</td></tr>
+            <tr><td class="m cy">Query engine</td><td class="dim">Impala</td><td class="dim">Databricks SQL</td><td class="changed">Tableau ODBC string</td></tr>
+            <tr><td class="m cy">Format</td><td class="dim">Parquet + Snappy</td><td class="dim">Delta Lake (ACID)</td><td class="changed">target_format in config</td></tr>
+            <tr><td class="m cy">Audit columns</td><td class="dim">26 cols</td><td class="dim">26 cols</td><td class="unchanged">UNCHANGED</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="code-block">
+      <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>&nbsp; databricks_migration.sh — complete migration (2 SQL statements do the cutover)</div>
+      <pre>#!/usr/bin/env bash
+# EDF On-Prem to Databricks — ZERO pipeline code changes
+# TOTAL BL CODE CHANGE: 0 lines
+# TOTAL ORACLE CHANGES: 1 INSERT + 2 UPDATEs
+set -euo pipefail
+
+DB_WORKSPACE=”${1:?Databricks workspace URL required}”
+STORAGE_PREFIX=”${2:?Storage prefix required (s3a:// or dbfs:/)}”
+
+# STEP 1: Register new environment
+
+sqlplus_exec “
+INSERT INTO ENVIRONMENT_CONFIG (
+env_id,env_nm,hdfs_base_path,spark_master,
+storage_prefix,catalog_type,active_flg)
+VALUES (
+5,‘DATABRICKS’,
+‘${STORAGE_PREFIX}/edf/’,
+‘databricks://${DB_WORKSPACE}’,
+‘${STORAGE_PREFIX}’,‘unity’,‘N’)”
+
+# STEP 2: Copy data
+
+hadoop distcp hdfs://raw/     ${STORAGE_PREFIX}/edf/raw/
+hadoop distcp hdfs://curated/ ${STORAGE_PREFIX}/edf/curated/
+hadoop distcp hdfs://gold/    ${STORAGE_PREFIX}/edf/gold/
+
+# STEP 3: Register Delta tables in Unity Catalog
+
+python3 unity_catalog_registrar.py –env DATABRICKS
+
+# STEP 4: Run smoke test on Databricks
+
+edf_smoke_test.sh –env DATABRICKS –pipeline-id 301
+
+# STEP 5: THE 2 SQL STATEMENTS THAT DO THE MIGRATION
+
+sqlplus_exec “UPDATE ENVIRONMENT_CONFIG SET active_flg=‘N’ WHERE env_nm=‘ONPREM’”
+sqlplus_exec “UPDATE ENVIRONMENT_CONFIG SET active_flg=‘Y’ WHERE env_nm=‘DATABRICKS’”
+sqlplus_exec “COMMIT”
+
+# STEP 6: Switch scheduler to Airflow
+
+sqlplus_exec “UPDATE SCHEDULER_CONFIG SET scheduler_type=‘AIRFLOW’”
+edf_scheduler_sync.sh
+
+echo “Migration complete. All TRANSFORM_STEPS unchanged.”
+echo “All DQ_RULES unchanged. All audit columns unchanged.”
+echo “Zero pipeline code rewritten.”</pre>
+</div>
+
+  </div>
+
+  <!-- All Tools -->
+
+  <div id="mig-panel-tools" class="tab-panel">
+    <div class="card">
+      <div class="card-body" style="padding:0;">
+        <table class="data-table">
+          <thead><tr><th>SCRIPT</th><th>PURPOSE</th><th>KEY ARGS</th><th>OUTPUT</th></tr></thead>
+          <tbody>
+            <tr><td class="m lm">edf_migrate_audit.sh</td><td class="dim">Inventory all existing Spark jobs + Autosys entries</td><td class="m dim">--output csv</td><td class="dim">inventory.csv</td></tr>
+            <tr><td class="m lm">edf_migrate_convert.py</td><td class="dim">Parse existing PySpark → suggest TRANSFORM_STEPS inserts</td><td class="m dim">--file job.py --pipeline-id 301</td><td class="dim">INSERT SQL for review</td></tr>
+            <tr><td class="m lm">jil_importer.py</td><td class="dim">Parse JIL → SCHEDULER_CONFIG + DEPENDENCY_GRAPH</td><td class="m dim">--input jobs.jil --dry-run</td><td class="dim">Oracle rows + summary</td></tr>
+            <tr><td class="m lm">edf_parallel_validate.sh</td><td class="dim">Run old + new pipeline, compare outputs row-by-row</td><td class="m dim">--pipeline-id 301 --days 5</td><td class="dim">Recon report XLSX</td></tr>
+            <tr><td class="m lm">edf_cutover.sh</td><td class="dim">Disable old job, activate EDF, notify team</td><td class="m dim">--pipeline-id 301 --notify</td><td class="dim">Cutover log + email</td></tr>
+            <tr><td class="m lm">unity_catalog_registrar.py</td><td class="dim">Register Delta tables in Unity Catalog from SCHEMA_REGISTRY</td><td class="m dim">--env DATABRICKS</td><td class="dim">Catalog entries created</td></tr>
+            <tr><td class="m lm">databricks_migration.sh</td><td class="dim">Full EDF on-prem → Databricks</td><td class="m dim">workspace_url storage_prefix</td><td class="dim">Active env switched</td></tr>
+            <tr><td class="m lm">edf_rollback_env.sh</td><td class="dim">Rollback environment switch</td><td class="m dim">--from DATABRICKS --to ONPREM</td><td class="dim">active_flg flipped back</td></tr>
+            <tr><td class="m lm">edf_smoke_test.sh</td><td class="dim">Post-migration smoke test</td><td class="m dim">--pipeline-id 301 --env DATABRICKS</td><td class="dim">Pass/fail + log</td></tr>
+            <tr><td class="m lm">edf_scheduler_sync.sh</td><td class="dim">Sync both Autosys JIL and Airflow DAGs from Oracle</td><td class="m dim">(no args needed)</td><td class="dim">Both schedulers updated</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checklist -->
+
+  <div id="mig-panel-checklist" class="tab-panel">
+    <div class="grid-2">
+      <div>
+        <div style="font-family:monospace;font-size:10px;color:var(--cy2);margin-bottom:8px;letter-spacing:1px;">PHASE A — PREPARE (Week 1)</div>
+        <div class="checklist-item"><input type="checkbox" style="accent-color:var(--cy2)"><span>Run edf_migrate_audit.sh — full inventory of all jobs</span></div>
+        <div class="checklist-item"><input type="checkbox" style="accent-color:var(--cy2)"><span>Review inventory — classify each pipeline by complexity</span></div>
+        <div class="checklist-item"><input type="checkbox" style="accent-color:var(--cy2)"><span>Set up Oracle EDF schema on target DB</span></div>
+        <div class="checklist-item"><input type="checkbox" style="accent-color:var(--cy2)"><span>Set up Vault credentials for all data sources</span></div>
+        <div class="checklist-item"><input type="checkbox" style="accent-color:var(--cy2)"><span>Test all source connections (edf_test_connection.sh)</span></div>
+        <div class="checklist-item"><input type="checkbox" style="accent-color:var(--cy2)"><span>Register ENVIRONMENT_CONFIG for on-prem environment</span></div>
+        <div class="checklist-item"><input type="checkbox" style="accent-color:var(--cy2)"><span>Establish team namespace conventions</span></div>
+
+```
+    <div style="font-family:monospace;font-size:10px;color:var(--or2);margin:14px 0 8px;letter-spacing:1px;">PHASE B — MIGRATE PIPELINES (Week 2–4)</div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--or2)"><span>Run edf_migrate_convert.py on pilot pipeline (least complex)</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--or2)"><span>Review + approve generated INSERT SQL</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--or2)"><span>Add DQ rules for pilot pipeline</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--or2)"><span>Insert SCHEDULER_CONFIG row (scheduler_type=BOTH)</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--or2)"><span>Run edf_scheduler_sync.sh — verify both Autosys + Airflow updated</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--or2)"><span>Run parallel validation 5 business days</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--or2)"><span>Cut over pilot pipeline</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--or2)"><span>Repeat for all remaining pipelines</span></div>
+  </div>
+  <div>
+    <div style="font-family:monospace;font-size:10px;color:var(--pu2);margin-bottom:8px;letter-spacing:1px;">PHASE C — GOVERNANCE (Week 3–4)</div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--pu2)"><span>Register all schemas in SCHEMA_REGISTRY</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--pu2)"><span>Set up data contracts for cross-team dependencies</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--pu2)"><span>Configure masking for all PII columns</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--pu2)"><span>Set up encryption for sensitive tables</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--pu2)"><span>Register test cases in TEST_CASE_CONFIG</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--pu2)"><span>Run full test suite — all pipelines pass</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--pu2)"><span>Configure alert channels per namespace</span></div>
+
+    <div style="font-family:monospace;font-size:10px;color:var(--lm2);margin:14px 0 8px;letter-spacing:1px;">PHASE D — DATABRICKS (When Ready)</div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--lm2)"><span>Register DATABRICKS in ENVIRONMENT_CONFIG</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--lm2)"><span>Copy data: HDFS → S3/DBFS (distcp / databricks fs cp)</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--lm2)"><span>Run unity_catalog_registrar.py</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--lm2)"><span>Run edf_smoke_test.sh --env DATABRICKS</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--lm2)"><span>Run parallel validation 3 days on Databricks</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--lm2)"><span>Execute 2-statement cutover SQL</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--lm2)"><span>Update SCHEDULER_CONFIG scheduler_type to AIRFLOW</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--lm2)"><span>Run edf_scheduler_sync.sh</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--lm2)"><span>Monitor 5 business days</span></div>
+    <div class="checklist-item"><input type="checkbox" style="accent-color:var(--lm2)"><span>Decommission on-prem Spark cluster (keep data 90 days)</span></div>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- ════════ PAGE: CIRCUIT BREAKER ════════ -->
+
+<div class="page" id="page-circuit">
+  <div class="eyebrow">EDF v6 — MODULE · CIRCUIT BREAKER</div>
+  <div class="page-title">Self-Healing Auto-Disable — 3 States, Config-Driven</div>
+  <div class="info-bar ib-pk">
+    <span class="ib-label" style="color:var(--pk2)">RULE: </span>
+    After N consecutive failures (failure_threshold in CIRCUIT_BREAKER_CONFIG), breaker trips to OPEN — pipeline disabled automatically. After cooldown_minutes → HALF_OPEN (one probe run allowed). Success → CLOSED. Fail → back to OPEN. P1 alert + email on every state change.
+  </div>
+  <div class="grid-3" style="margin-bottom:16px;">
+    <div class="cb-state cb-closed"><span style="font-size:20px;">🟢</span><div><div style="font-weight:700;color:var(--gn2);font-size:12px;">CLOSED — Normal</div><div style="font-size:10px;color:var(--tx3);margin-top:3px;">Running normally. Failure count resets on success.</div></div></div>
+    <div class="cb-state cb-open"><span style="font-size:20px;">🔴</span><div><div style="font-weight:700;color:var(--rd2);font-size:12px;">OPEN — Tripped · Disabled</div><div style="font-size:10px;color:var(--tx3);margin-top:3px;">N failures hit. Cooldown running. P1 alert fired.</div></div></div>
+    <div class="cb-state cb-half"><span style="font-size:20px;">🟡</span><div><div style="font-weight:700;color:var(--or2);font-size:12px;">HALF_OPEN — Probe</div><div style="font-size:10px;color:var(--tx3);margin-top:3px;">Cooldown expired. One probe run allowed.</div></div></div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>&nbsp; CIRCUIT_BREAKER_CONFIG + CIRCUIT_BREAKER_STATE DDL</div>
+    <pre>CREATE TABLE CIRCUIT_BREAKER_CONFIG (
+  pipeline_id       NUMBER(10)  PRIMARY KEY REFERENCES PIPELINE_REGISTRY,
+  failure_threshold NUMBER(3)   DEFAULT 3,   -- trips after N failures
+  cooldown_minutes  NUMBER(5)   DEFAULT 30,  -- wait before HALF_OPEN
+  probe_runs        NUMBER(2)   DEFAULT 1,   -- probes before CLOSED
+  alert_on_trip     CHAR(1)     DEFAULT 'Y',
+  alert_on_recover  CHAR(1)     DEFAULT 'Y',
+  active_flg        CHAR(1)     DEFAULT 'Y'
+);
+
+CREATE TABLE CIRCUIT_BREAKER_STATE (
+pipeline_id       NUMBER(10)   PRIMARY KEY,
+status            VARCHAR2(15) DEFAULT ‘CLOSED’,
+failure_count     NUMBER(5)    DEFAULT 0,
+tripped_ts        TIMESTAMP,
+last_failure_ts   TIMESTAMP,
+last_success_ts   TIMESTAMP,
+updated_ts        TIMESTAMP    DEFAULT SYSTIMESTAMP
+);</pre>
+
+  </div>
+</div>
+
+<!-- ════════ PAGE: WATERMARK ════════ -->
+
+<div class="page" id="page-watermark">
+  <div class="eyebrow">EDF v6 — MODULE · WATERMARK / INCREMENTAL</div>
+  <div class="page-title">High-Watermark in Oracle — No Gaps, No Duplicates</div>
+  <div class="info-bar ib-cy">
+    <span class="ib-label" style="color:var(--cy2)">RULE: </span>
+    WATERMARK_STATE stores last successfully loaded HWM per source. Runner queries WHERE watermark_col &gt; last_hwm. HWM only advances after confirmed successful write. Failed run re-loads from last good HWM. lookback_mins provides overlap window for late-arriving rows.
+  </div>
+  <div class="wm-timeline">
+    <div class="wm-node" style="border-color:var(--b3)">Run 1<br><span class="dim">HWM:0</span><br><span class="gn">45,200 rows</span></div>
+    <div class="wm-arrow"></div>
+    <div class="wm-node" style="border-color:var(--cy2)">Run 2<br><span class="cy">HWM:45200</span><br><span class="gn">312 new</span></div>
+    <div class="wm-arrow"></div>
+    <div class="wm-node" style="border-color:var(--rd2)">Run 3 FAIL<br><span class="or">HWM:45200</span><br><span class="rd">NOT advanced</span></div>
+    <div class="wm-arrow"></div>
+    <div class="wm-node" style="border-color:var(--gn2)">Run 4 Retry<br><span class="cy">HWM:45200</span><br><span class="gn">Re-loads from 45200</span></div>
+    <div class="wm-arrow"></div>
+    <div class="wm-node" style="border-color:var(--gn2)">Run 5<br><span class="cy">HWM:45512</span><br><span class="gn">312 new</span></div>
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>&nbsp; WATERMARK_STATE DDL + SOURCE_CONFIG additions</div>
+    <pre>CREATE TABLE WATERMARK_STATE (
+  pipeline_id  NUMBER(10)    NOT NULL,
+  source_id    NUMBER(10)    NOT NULL,
+  hwm_value    VARCHAR2(500) NOT NULL,  -- timestamp or sequence number
+  updated_ts   TIMESTAMP     DEFAULT SYSTIMESTAMP,
+  PRIMARY KEY (pipeline_id, source_id)
+);
+
+– HWM only written AFTER confirmed successful HDFS write.
+– Atomicity: if write fails, HWM stays at previous value.
+– Reset for full reload: edf_run.sh -p 301 –full-reload
+– lookback_mins in SOURCE_CONFIG: overlap window for late-arriving rows.
+
+– v6 addition to SOURCE_CONFIG:
+ALTER TABLE SOURCE_CONFIG ADD (
+watermark_col       VARCHAR2(200),  – e.g. UPDATED_TS or SEQ_ID
+watermark_type      VARCHAR2(20),   – TIMESTAMP or SEQUENCE
+full_load_flg       CHAR(1) DEFAULT ‘N’,
+hwm_lookback_mins   NUMBER(5) DEFAULT 0  – safe overlap window
+);</pre>
+
+  </div>
+</div>
+
+<!-- ════════ PAGE: PIPELINE RUNNER ════════ -->
+
+<div class="page" id="page-pipeline">
+  <div class="eyebrow">EDF v6 — CORE · PIPELINE RUNNER</div>
+  <div class="page-title">spark_runner.py v6 — Complete 14-Step Execution</div>
+  <div class="info-bar ib-cy">
+    <span class="ib-label" style="color:var(--cy2)">ZERO BL CODE: </span>
+    The runner never contains business logic. Every SQL expression, transformation, DQ rule, and mask strategy comes from Oracle at runtime. Adding a new pipeline = INSERT Oracle rows. Changing BL = UPDATE a step_sql value. Zero code deployments for business logic changes.
+  </div>
+  <div class="code-block">
+    <div class="code-header"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>&nbsp; spark_runner.py v6 — complete execution sequence</div>
+    <pre>def execute_pipeline(pipeline_id, run_id, biz_date, mode='SCHEDULED'):
+
+```
+# 1. Load ALL config from Oracle (single round-trip)
+cfg      = oracle.load('PIPELINE_REGISTRY', pipeline_id)
+steps    = oracle.load_ordered('TRANSFORM_STEPS', pipeline_id)
+dq_rules = oracle.load('DQ_RULES', pipeline_id)
+env      = oracle.get_active_env()              # ENVIRONMENT_CONFIG
+cb_ok    = circuit_breaker.can_run(pipeline_id) # v6: circuit check
+if not cb_ok: raise CircuitBreakerOpenException()
+
+# 2. Test suite pre-check (TEST mode only)
+if mode == 'TEST':
+    return test_runner.run_suite(pipeline_id)
+
+# 3. Watermark — load only new rows (v6)
+wm_filter = watermark_mgr.get_incremental_query(cfg, pipeline_id)
+
+# 4. Load all sources (multi-source, cross-source joins)
+src_df = source_loader.load_all(cfg.sources, env, wm_filter)
+
+# 5. Profile RAW zone (async, non-blocking)
+profiler.profile_async(src_df, pipeline_id, 'RAW', run_id)
+
+# 6. Execute TRANSFORM_STEPS — ALL BL comes from Oracle rows
+df = src_df
+for step in steps:
+    df = transform_engine.apply(df, step)  # step_sql from Oracle
+    gates = [r for r in dq_rules if r.after_step == step.id]
+    if gates:
+        df, quarantine = dq_engine.validate(df, gates)
+        if quarantine.count() > 0:
+            dlq_mgr.send_to_dlq(quarantine, pipeline_id, run_id, step.id)
+
+# 7. Schema evolution check (v6)
+df = schema_evo_handler.check_and_evolve(df, pipeline_id, cfg.target_table)
+
+# 8. Apply PII masking (before any write)
+df = masking_engine.apply(df, pipeline_id, 'CURATED')
+
+# 9. Reconcile source vs transformed output
+recon_engine.reconcile(src_df, df, pipeline_id, run_id, 'CURATED')
+
+# 10. Inject 26 audit columns (MANDATORY — no bypass possible)
+df = audit_injector.append(df, pipeline_id, run_id, 'CURATED')
+
+# 11. Configure Parquet encryption + write to HDFS/Delta
+spark = enc_engine.configure(spark, pipeline_id, 'CURATED')
+target_writer.write(df, cfg.target_config, env)
+
+# 12. Profile CURATED + GOLD zones, detect drift
+profiler.profile_async(df, pipeline_id, 'CURATED', run_id)
+
+# 13. Track cost + refresh Oracle REST API cache (Position 3)
+cost_tracker.calculate_and_log(run_id, pipeline_id, sc, t0, t1)
+oracle.refresh_api_cache(pipeline_id, run_id)
+
+# 14. Audit + lineage + advance HWM + emails (XLSX+PDF+CSV)
+oracle.log_audit(run_id, pipeline_id, 'SUCCESS')
+oracle.log_lineage(pipeline_id, steps, run_id)
+watermark_mgr.advance_hwm(pipeline_id, cfg.source_id, src_df)  # v6
+circuit_breaker.record_success(pipeline_id)                     # v6
+email_engine.send(pipeline_id, 'LOAD_SUCCESS', context={
+    'run_id': run_id,
+    'cost': cost_tracker.last,
+    'recon': recon_engine.results,
+    'profile_drift': profiler.drift_summary
+})
+```
+
+# TOTAL NEW CODE FOR v6 FEATURES: ~0 lines in runner.
+
+# All modules are plug-in classes reading Oracle config.
+
+# Business logic, masking, encryption, tests, costs -> Oracle rows.</pre>
+
+  </div>
+</div>
+
+<!-- ════════ PAGE: OPS DASHBOARD ════════ -->
+
+<div class="page" id="page-ops">
+  <div class="eyebrow">EDF v6 — OPERATIONS CENTER</div>
+  <div class="page-title">Live Pipeline Health — All Modules in One View</div>
+
+  <div class="stats stats-6" style="margin-bottom:20px;">
+    <div class="stat-card" style="border-top-color:var(--gn2)">
+      <div class="stat-num gn">14/16</div>
+      <div class="stat-lbl">Pipelines Complete</div>
+      <div class="stat-note gn">All recon passed</div>
+    </div>
+    <div class="stat-card" style="border-top-color:var(--cy2)">
+      <div class="stat-num cy">99.97%</div>
+      <div class="stat-lbl">DQ Pass Rate</div>
+      <div class="stat-note gn">↑ vs yesterday</div>
+    </div>
+    <div class="stat-card" style="border-top-color:var(--gd2)">
+      <div class="stat-num gd">$4.82</div>
+      <div class="stat-lbl">Today Cost</div>
+      <div class="stat-note gn">↓ 12% vs avg</div>
+    </div>
+    <div class="stat-card" style="border-top-color:var(--lm2)">
+      <div class="stat-num lm">9/10</div>
+      <div class="stat-lbl">Tests Passing</div>
+      <div class="stat-note or">1 FAIL TC-006</div>
+    </div>
+    <div class="stat-card" style="border-top-color:var(--gn2)">
+      <div class="stat-num gn">0</div>
+      <div class="stat-lbl">Open Circuits</div>
+      <div class="stat-note gn">All breakers CLOSED</div>
+    </div>
+    <div class="stat-card" style="border-top-color:var(--gn2)">
+      <div class="stat-num gn">0</div>
+      <div class="stat-lbl">DLQ Permanent</div>
+      <div class="stat-note gn">All DLQ resolved</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div class="card-icon" style="background:rgba(6,182,212,.1);color:var(--cy)">📊</div>
+      <div>
+        <div class="card-title">Pipeline Status — from Oracle API_CACHE (sub-10ms)</div>
+        <div class="card-sub">All v5+v6 module statuses per pipeline · Autosys scheduler column added</div>
+      </div>
+    </div>
+    <div class="card-body" style="padding:0;">
+      <table class="data-table">
+        <thead>
+          <tr><th>PIPELINE</th><th>STATUS</th><th>SCHEDULER</th><th>DQ %</th><th>RECON</th><th>MASKING</th><th>PROFILE</th><th>CIRCUIT</th><th>WM</th><th>COST</th><th>TESTS</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="m cy">trade_enrichment</td>
+            <td><span class="tag tag-gn">DONE</span></td>
+            <td class="dim">Autosys</td>
+            <td>
+              <div class="prog-wrap"><div class="prog-bar" style="width:100%;background:var(--gn2)"></div></div>
+              <span class="m" style="font-size:9px;">100%</span>
+            </td>
+            <td class="gn">✓</td><td class="pk">3 cols</td><td class="pu">0 drift</td>
+            <td class="gn">CLOSED</td><td class="cy">INCR</td><td class="gd">$0.18</td><td class="lm">9/10 ⚠</td>
+          </tr>
+          <tr>
+            <td class="m cy">counterparty_ref</td>
+            <td><span class="tag tag-gn">DONE</span></td>
+            <td class="dim">Autosys</td>
+            <td>
+              <div class="prog-wrap"><div class="prog-bar" style="width:100%;background:var(--gn2)"></div></div>
+              <span class="m" style="font-size:9px;">100%</span>
+            </td>
+            <td class="gn">✓</td><td class="pk">1 col</td><td class="pu">0 drift</td>
+            <td class="gn">CLOSED</td><td class="cy">INCR</td><td class="gd">$0.04</td><td class="lm">5/5 ✓</td>
+          </tr>
+          <tr>
+            <td class="m cy">risk_aggregation</td>
+            <td><span class="tag tag-cy">RUNNING</span></td>
+            <td class="dim">Autosys</td>
+            <td>
+              <div class="prog-wrap"><div class="prog-bar" style="width:74%;background:var(--cy)"></div></div>
+              <span class="m" style="font-size:9px;">74%</span>
+            </td>
+            <td class="or">⏳</td><td class="pk">2 cols</td><td class="or">⏳</td>
+            <td class="gn">CLOSED</td><td class="cy">FULL</td><td class="or">$0.31 est</td><td class="lm">8/8 ✓</td>
+          </tr>
+          <tr>
+            <td class="m cy">fx_rates_ref</td>
+            <td><span class="tag tag-gn">DONE</span></td>
+            <td class="dim">Autosys</td>
+            <td>
+              <div class="prog-wrap"><div class="prog-bar" style="width:100%;background:var(--gn2)"></div></div>
+              <span class="m" style="font-size:9px;">100%</span>
+            </td>
+            <td class="gn">✓</td><td class="dim">none</td><td class="pu">0 drift</td>
+            <td class="gn">CLOSED</td><td class="cy">INCR</td><td class="gd">$0.001</td><td class="lm">3/3 ✓</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ GENERIC PAGES for all other modules ════════ -->
+
+<div class="page" id="page-arch">
+  <div class="eyebrow">EDF v6 — ARCHITECTURE OVERVIEW</div>
+  <div class="page-title">Architecture Overview</div>
+  <div class="info-bar ib-cy"><span class="ib-label" style="color:var(--cy2)">MODULE SUMMARY: </span>Full SVG architecture showing all zones (Sources → RAW → Spark Engine → CURATED → GOLD → Tableau), Oracle config store driving everything, governance layer, cloud portability strip. Every component labelled.</div>
+  <div class="card"><div class="card-head"><div class="card-icon" style="background:rgba(6,182,212,.1);color:var(--cy)">📋</div><div><div class="card-title">Navigate to related modules</div></div></div><div class="card-body"><div style="font-size:11px;color:var(--tx2);line-height:2;">Use the sidebar to navigate all 42 modules. Every module follows the same principle: config in Oracle, zero BL in code. Click <strong style="color:var(--cy2)">Pipeline Runner</strong> to see how all modules plug into the 14-step execution sequence.</div></div></div>
 </div>
 
 <script>
+// Generate generic pages for all remaining modules
+var GENERIC = {
+  oracle:   ['Oracle Schema — 20 Tables', 'ib-rd', 'rd2', 'All 20 Oracle config + cache tables with full CREATE TABLE DDL: PIPELINE_REGISTRY · TRANSFORM_STEPS · SOURCE_CONFIG · JOIN_CONFIG · DQ_RULES · EMAIL_CONFIG · EMAIL_ATTACHMENT_CONFIG · AUDIT_LOG · ERROR_LOG · SCHEMA_REGISTRY · LINEAGE_MAP · ENVIRONMENT_CONFIG · API_CACHE · DATA_PROFILE_RESULTS · PII_MASKING_CONFIG · RECON_CONFIG · ENCRYPTION_CONFIG · TEST_CASE_CONFIG · SCHEDULER_CONFIG · WATERMARK_STATE.'],
+  audit:    ['Audit Columns — 26', 'ib-cy', 'cy2', '26 audit columns in 4 groups. Source: SRC_SYSTEM_CD · SRC_SCHEMA_NM · SRC_TABLE_NM · SRC_FILE_NM · SRC_ROW_CHECKSUM · SRC_EXTRACT_DT. Load: LOAD_DT · LOAD_TS · LOAD_RUN_ID · LOAD_PIPELINE_ID · LOAD_BATCH_ID · LOAD_FREQUENCY. Processing: PROC_STATUS_CD · PROC_STEP_LAST · PROC_ZONE · PROC_DQ_FLAGS · PROC_TRANSFORM_VER · PROC_REPROCESS_FLG. System: SYS_CREATED_TS · SYS_UPDATED_TS · SYS_EFF_FROM_DT · SYS_EFF_TO_DT · SYS_CURRENT_FLG · SYS_SPARK_APP_ID · SYS_ENV_NM · SYS_SCHEMA_VER.'],
+  sources:  ['Multi-Source Connectors', 'ib-or', 'or2', '10 connector types: HDFS · Oracle JDBC · REST API (OAuth2) · Kafka (SASL) · SFTP (SSH key) · S3/GCS/ADLS · Delta/Iceberg · Hive · Impala · CDC streams. All auth via Vault — zero hardcoded credentials. Cross-source JOINs via JOIN_CONFIG. Multi-source enrichment fully config-driven.'],
+  builder:  ['Pipeline Builder', 'ib-cy', 'cy2', 'Interactive pipeline builder — enter pipeline metadata + SQL steps → auto-detects step type (FILTER/DERIVE/JOIN/AGG/DECODE/DEDUP/SCD2/PIVOT) → generates complete Oracle INSERT statements ready to execute. Add DQ rules, email config, Autosys/Airflow scheduling in the same flow.'],
+  dq:       ['DQ Engine — 10 Rule Types', 'ib-gn', 'gn2', '10 rule types: NOT_NULL · RANGE · REGEX · REFERENTIAL · UNIQUENESS · VOLUME_SPIKE · FRESHNESS · CUSTOM_SQL · CROSS_TABLE · SCHEMA_MATCH. Fail actions: ABORT · QUARANTINE · WARN · FLAG. Quarantine rows route to DLQ. Full DQEngine.validate() source code.'],
+  email:    ['Email + Attachments', 'ib-or', 'or2', '8 trigger events: LOAD_SUCCESS · LOAD_FAILURE · DQ_FAILURE · SLA_BREACH · SLA_AT_RISK · SCHEMA_DRIFT · PROFILE_DRIFT · COST_ALERT. All 3 formats on every event: XLSX (styled 3-sheet workbook) · PDF (Jinja2 → WeasyPrint, branded) · CSV (raw AUDIT_LOG/DQ_RESULTS). Business pivot tables configurable per pipeline.'],
+  sla:      ['SLA Monitor', 'ib-gd', 'gd2', 'Predictive alerting at 70% of SLA elapsed. Rolling 7-run velocity prediction. Cascade dependency awareness. Full SLAMonitor daemon code with predict_completion() using row processing rate. SLA breach also fires to all configured alert channels.'],
+  errors:   ['Error Logging', 'ib-rd', 'rd2', '8 error categories P1–P5. Full ERROR_LOG DDL with stack trace capture (CLOB), retry tracking, resolution workflow. Categorised: SCHEMA_MISMATCH · SOURCE_UNAVAILABLE · DQ_ABORT_THRESHOLD · TRANSFORM_SQL_ERROR · PARTIAL_LOAD · VOLUME_ANOMALY · SLA_AT_RISK · SCHEMA_DRIFT_WARN.'],
+  api:      ['REST API — Position 1+3', 'ib-gd', 'gd2', 'Position 1 (config): GET/POST/PUT for PIPELINE_REGISTRY + TRANSFORM_STEPS — external tools manage config without direct Oracle access. Position 3 (cache): GET /status/live · /dq/scorecard · /sla/dashboard · /lineage · /errors/open — reads pre-materialized Oracle API_CACHE tables, sub-10ms. JWT auth, rate limiting, Swagger auto-docs.'],
+  shell:    ['Shell Scripts — 18 Commands', 'ib-gn', 'gn2', '18 scripts: edf_run · edf_run_all · edf_status · edf_reprocess · edf_health · edf_bootstrap · edf_env_switch · edf_deploy_pipeline · edf_disable_pipeline · edf_sla_check · edf_dq_report · edf_quarantine · edf_lineage · edf_schema_diff · edf_email_test · edf_log_tail · edf_audit_query · edf_cleanup. All parameterized, zero hardcoded values.'],
+  cloud:    ['Cloud Portability', 'ib-gn', 'gn2', 'On-Prem (HDFS · Spark · Impala · Kerberos) → Databricks (Delta · Unity · DB SQL) → GCP (Dataproc · GCS · BigQuery) → AWS (EMR · S3 · Glue · Athena). Migration = 2 SQL UPDATEs to ENVIRONMENT_CONFIG. TRANSFORM_STEPS SQL runs identically on all Spark platforms.'],
+  profiling:['Data Profiling — Full Depth', 'ib-pu', 'pu2', 'Full depth: null% · distinct count · min/max · mean · stddev · P25/P50/P75/P95 · 10-bucket histogram · top-20 values · 6 cardinality classes · pattern detection (EMAIL/IBAN/PAN/UUID etc) · PII auto-detect · anomaly score 0–1. Drift detection: 7 metrics vs 7-run rolling average.'],
+  masking:  ['Masking + PII', 'ib-pk', 'pk2', '9 strategies: TOKENISE (AES-256 reversible) · HASH_SHA256 · MASK_PARTIAL · MASK_CARD · REDACT · GENERALISE · NOISE_ADD · FORMAT_PRESERVE (FPE for IBAN) · ROLE_UNMASK. PII_MASKING_CONFIG · PII_ACCESS_GRANTS · TOKEN_VAULT DDL. Applied before every zone write.'],
+  recon:    ['Reconciliation Engine', 'ib-pu', 'pu2', '5 control types: ROW_COUNT · SUM_CONTROL · COUNT_CONTROL · HASH_SAMPLE (1K row MD5) · ZONE_WATERFALL (RAW→CURATED→GOLD). Per-control tolerance in RECON_CONFIG. XLSX attachment on any failure.'],
+  cost:     ['Cost Tracking', 'ib-gd', 'gd2', 'On-prem: core-seconds × rate + HDFS-GB × storage rate. Cloud: Databricks DBU API · GCP Billing API · AWS Cost Explorer. Cost-per-million-rows KPI. Monthly budget caps per namespace. COST_RATE_CONFIG · PIPELINE_COST_LOG DDL.'],
+  encrypt:  ['Row-Level Encryption', 'ib-gd', 'gd2', 'Parquet Modular Encryption (PME) — AES-256-GCM at column level during Spark write. Keys from Vault/AWS KMS/GCP KMS only — never stored in Oracle. Key rotation scheduling. DECRYPT_AUDIT_LOG for every decrypt event.'],
+  testing:  ['Test Framework', 'ib-lm', 'lm2', '10 assertion types: ROW_COUNT · COLUMN_VALUE · SUM_CONTROL · SCHEMA_MATCH · AUDIT_COLS · DQ_EXPECTATION · MASKING · RECON_PASS · PROFILE_RANGE · COST_BOUNDS. Golden datasets in hdfs://edf-test/golden/. block_deploy=Y blocks deployment on failure.'],
+  schevo:   ['Schema Evolution', 'ib-gn', 'gn2', 'Additive changes (ADD_COLUMN, WIDEN_TYPE) → auto-ALTER Hive/Delta + update SCHEMA_REGISTRY. Breaking changes (DROP, NARROW, RENAME) → ABORT + notify data contract consumers. Zero-downtime for additive.'],
+  dlq:      ['Dead Letter Queue', 'ib-rd', 'rd2', 'Exponential backoff: 5min → 15min → 60min. After 3 retries → PERMANENT zone. DLQ_LOG table. HDFS: pending/ · retrying/ · resolved/ · permanent/. P1 alert on entry. Manual re-inject via edf_dlq.sh. Zero data loss guaranteed.'],
+  contracts:['Data Contracts', 'ib-pu', 'pu2', 'Producer registers schema + SLA + DQ guarantees. Consumers subscribe. Breaking schema change requires contract version bump AND all consumer ACKs before deploy. SLA breach on producer alerts all consumers.'],
+  observ:   ['Observability Metrics', 'ib-cy', 'cy2', 'Spark metrics per run → Oracle SPARK_METRICS: CPU · GC · peak memory · tasks · bytes · shuffle · spill · P50/P95/P99 task time · skew. Regression detection via 7-run window function (P95 up >50% → P3 alert).'],
+  tenancy:  ['Multi-Tenancy', 'ib-pu', 'pu2', 'TEAM_NAMESPACE table. Oracle VPD policy — users see only rows in their granted namespaces. Ranger policies auto-synced. HDFS paths include namespace. Cost budgets per namespace. Team-level alert routing.'],
+  dag:      ['DAG + Dependencies', 'ib-cy', 'cy2', 'DEPENDENCY_GRAPH table. meta_dag_generator.py auto-generates Airflow Python DAG files + Autosys JIL conditions. Adding dependency = INSERT 1 row. Visual chain shown in Architecture view.'],
+  versioning:['Pipeline Versioning', 'ib-lm', 'lm2', 'Auto-trigger on TRANSFORM_STEPS changes snapshots all steps to PIPELINE_VERSION_HISTORY. One-command rollback: edf_rollback.sh -p 301 -v 2.3. Mandatory change_desc. Diff between any two versions queryable.'],
+  alerting: ['Alert Channels', 'ib-or', 'or2', '4 channels: Email · Slack · PagerDuty · Teams. Per-pipeline per-severity routing via ALERT_CHANNEL_CONFIG. P1 → all 4. P2 → Email+Slack+Teams. P3 → Slack only. Rate limiting. All credentials via Vault.'],
+  regulatory:['Regulatory Reports', 'ib-pu', 'pu2', 'Auto-generate: GDPR data inventory · PII column register · data retention schedule · lineage report · encryption certificate · SOX access log. All from Oracle config. XLSX + PDF. No manual compilation.'],
+  health:   ['Health Check API', 'ib-gn', 'gn2', '/health (liveness) · /ready (readiness: checks Oracle+HDFS+Spark+circuits, 503 if fail) · /metrics (Prometheus format). Kubernetes deployment YAML included. Grafana-compatible.'],
+};
 
-/* =========================
-NAV
-========================= */
+// Build generic page elements
+Object.keys(GENERIC).forEach(function(id) {
+  var existing = document.getElementById('page-' + id);
+  if (existing) return; // already hand-crafted
+  var data = GENERIC[id];
+  var el = document.createElement('div');
+  el.className = 'page';
+  el.id = 'page-' + id;
+  el.innerHTML =
+    '<div class="eyebrow">EDF v6 — MODULE · ' + id.toUpperCase() + '</div>' +
+    '<div class="page-title">' + data[0] + '</div>' +
+    '<div class="info-bar ' + data[1] + '"><span class="ib-label" style="color:var(--' + data[2] + ')">MODULE SUMMARY: </span>' + data[3] + '</div>' +
+    '<div class="card"><div class="card-head"><div class="card-icon" style="background:rgba(6,182,212,.1);color:var(--cy)">📋</div><div><div class="card-title">Navigate to related modules</div></div></div>' +
+    '<div class="card-body"><div style="font-size:11px;color:var(--tx2);line-height:2;">Use the sidebar to navigate all 42 modules. Every module follows the same principle: config in Oracle, zero BL in code. Click <strong style="color:var(--cy2)">Pipeline Runner</strong> to see how all modules plug into the 14-step execution sequence.</div></div></div>';
+  document.querySelector('.content-area').appendChild(el);
+});
 
-const NAV = [
+/* ─── NAVIGATION ─── */
+var PAGE_TITLES = {
+  index:'Master Index', problem:'Problem Statement — Why EDF',
+  arch:'Architecture Overview', oracle:'Oracle Schema — 20 Tables',
+  pipeline:'Pipeline Runner v6', audit:'Audit Columns — 26',
+  sources:'Multi-Source Connectors', builder:'Pipeline Builder',
+  dq:'DQ Engine', email:'Email + Attachments', sla:'SLA Monitor',
+  errors:'Error Logging', api:'REST API', shell:'Shell Scripts',
+  cloud:'Cloud Portability', profiling:'Data Profiling',
+  masking:'Masking + PII', recon:'Reconciliation Engine',
+  cost:'Cost Tracking', encrypt:'Row-Level Encryption',
+  testing:'Test Framework', circuit:'Circuit Breaker',
+  watermark:'Watermark / Incremental', schevo:'Schema Evolution',
+  dlq:'Dead Letter Queue', contracts:'Data Contracts',
+  observ:'Observability Metrics', tenancy:'Multi-Tenancy',
+  dag:'DAG + Dependencies', versioning:'Pipeline Versioning',
+  alerting:'Alert Channels', regulatory:'Regulatory Reports',
+  health:'Health Check API', scheduler:'Scheduler — Autosys + Airflow',
+  migration:'Migration Toolkit', ops:'Ops Dashboard',
+};
 
-{ id:"index", label:"Master Index" },
-{ id:"pipeline", label:"Pipeline Runner" },
-{ id:"scheduler", label:"Scheduler" },
-{ id:"migration", label:"Migration Toolkit" },
-{ id:"watermark", label:"Watermark" },
-{ id:"circuit", label:"Circuit Breaker" },
-{ id:"ops", label:"Ops Dashboard" }
+document.querySelectorAll('.nav-item').forEach(function(item) {
+  item.addEventListener('click', function() {
+    var pageId = this.getAttribute('data-page');
+    if (!pageId) return;
 
-]
+    // Update nav active
+    document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+    this.classList.add('active');
 
-/* =========================
-SIDEBAR
-========================= */
+    // Update topbar
+    document.getElementById('topbar-title').textContent = PAGE_TITLES[pageId] || pageId;
+    document.getElementById('topbar-path').textContent  = 'EDF v6 / ' + pageId;
 
-function buildSidebar(active){
+    // Show page
+    document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+    var page = document.getElementById('page-' + pageId);
+    if (page) {
+      page.classList.add('active');
+      // Scroll content area to top
+      document.querySelector('.content-area').scrollTop = 0;
+    }
+  });
+});
 
-let html = '<div class="logo">EDF v6</div>'
+/* ─── TAB SWITCHER ─── */
+function switchTab(group, panelId, btn) {
+  // Deactivate all buttons in the same tab-strip
+  btn.parentNode.querySelectorAll('.tab-btn').forEach(function(b) {
+    b.classList.remove('active');
+  });
+  btn.classList.add('active');
 
-NAV.forEach(n=>{
+  // Hide all panels for this group
+  document.querySelectorAll('[id^="' + group + '-panel-"]').forEach(function(p) {
+    p.classList.remove('active');
+  });
 
-html+=`
-<div 
-class="nav-item ${active===n.id?'active':''}"
-onclick="goto('${n.id}')"
->
-${n.label}
-</div>
-`
-
-})
-
-document.getElementById("sidebar").innerHTML = html
-
+  // Show target
+  var panel = document.getElementById(group + '-panel-' + panelId);
+  if (panel) panel.classList.add('active');
 }
-
-/* =========================
-VIEWS
-========================= */
-
-const views = {
-
-index:()=>`
-
-<div class="grid">
-
-<div class="stat">
-<div class="stat-num">42</div>
-modules
-</div>
-
-<div class="stat">
-<div class="stat-num">20</div>
-oracle tables
-</div>
-
-<div class="stat">
-<div class="stat-num">26</div>
-audit columns
-</div>
-
-<div class="stat">
-<div class="stat-num">14</div>
-runner steps
-</div>
-
-</div>
-
-<div class="card">
-
-<div class="card-header">
-framework summary
-</div>
-
-<div class="card-body">
-
-config driven pipelines  
-zero business logic in spark runner  
-
-all transformations stored in oracle  
-
-</div>
-
-</div>
-
-`,
-
-pipeline:()=>`
-
-<div class="card">
-
-<div class="card-header">
-spark runner execution flow
-</div>
-
-<div class="card-body">
-
-<div class="code">
-
-load config  
-apply transform steps  
-run dq  
-inject audit columns  
-write curated  
-update watermark  
-
-</div>
-
-</div>
-
-</div>
-
-`,
-
-scheduler:()=>`
-
-<div class="card">
-
-<div class="card-header">
-dual scheduler
-</div>
-
-<div class="card-body">
-
-autosys + airflow supported  
-
-scheduler config stored in oracle  
-
-same runner command executed  
-
-</div>
-
-</div>
-
-`,
-
-migration:()=>`
-
-<div class="card">
-
-<div class="card-header">
-migration paths
-</div>
-
-<div class="card-body">
-
-existing spark → edf  
-
-autosys → scheduler config  
-
-onprem → databricks  
-
-</div>
-
-</div>
-
-`,
-
-watermark:()=>`
-
-<div class="card">
-
-<div class="card-header">
-incremental processing
-</div>
-
-<div class="card-body">
-
-high watermark stored in oracle  
-
-only new records processed  
-
-no duplicates  
-
-</div>
-
-</div>
-
-`,
-
-circuit:()=>`
-
-<div class="card">
-
-<div class="card-header">
-circuit breaker states
-</div>
-
-<div class="card-body">
-
-closed → normal  
-
-open → blocked  
-
-half open → probe  
-
-</div>
-
-</div>
-
-`,
-
-ops:()=>`
-
-<div class="card">
-
-<div class="card-header">
-pipeline health
-</div>
-
-<div class="card-body">
-
-dq pass rate  
-
-cost tracking  
-
-sla monitoring  
-
-</div>
-
-</div>
-
-`
-
-}
-
-/* =========================
-NAVIGATION
-========================= */
-
-function goto(id){
-
-buildSidebar(id)
-
-document.getElementById("title").innerText =
-NAV.find(x=>x.id===id).label
-
-document.getElementById("content").innerHTML =
-views[id]()
-
-}
-
-/* =========================
-INIT
-========================= */
-
-goto("index")
-
 </script>
 
+  </div><!-- /.content-area -->
+</div><!-- /.main -->
+</div><!-- /.shell -->
 </body>
 </html>
